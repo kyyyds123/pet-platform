@@ -27,13 +27,62 @@
                     <li><i class="bi bi-person"></i> 商家：{{ service.provider.username }}</li>
                 </ul>
                 <p>{{ service.description }}</p>
-                {% if user.is_authenticated and not user.is_provider %}
-                <a href="{% url 'orders:order_create' service_id=service.pk %}" class="btn btn-primary btn-lg w-100">
-                    <i class="bi bi-calendar-check"></i> 立即预约
-                </a>
+
+                {% if user.is_authenticated and not user.is_provider and not user.is_admin_role %}
+                <!-- 选择宠物 + 直接预约 -->
+                {% if pets %}
+                <hr>
+                <form method="post" action="{% url 'orders:order_create' service_id=service.pk %}">
+                    {% csrf_token %}
+                    <label class="form-label fw-bold"><i class="bi bi-paw"></i> 选择宠物</label>
+                    <div class="row g-2 mb-3">
+                        {% for pet in pets %}
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="pet_id" id="dpet{{ pet.pk }}" value="{{ pet.pk }}" {% if forloop.first %}checked{% endif %} required>
+                            <label class="btn btn-outline-primary w-100 d-flex align-items-center gap-2 py-2" for="dpet{{ pet.pk }}">
+                                {% if pet.photo %}
+                                <img src="{{ pet.photo.url }}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover">
+                                {% else %}
+                                <span class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style="width:32px;height:32px">
+                                    <i class="bi bi-paw small"></i>
+                                </span>
+                                {% endif %}
+                                <span><strong>{{ pet.name }}</strong><br><small class="text-muted">{{ pet.breed }}</small></span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <input type="date" name="appointment_date" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="time" name="appointment_time" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-calendar-check"></i> 立即预约
+                    </button>
+                </form>
+                <div class="mt-2 text-center">
+                    <a href="{% url 'pets:pet_create' %}" class="text-decoration-none small text-muted">
+                        <i class="bi bi-plus-circle"></i> 添加新宠物
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-3 bg-light rounded-3">
+                    <i class="bi bi-paw text-muted" style="font-size:2rem"></i>
+                    <p class="mt-2 mb-2">预约前请先添加宠物</p>
+                    <a href="{% url 'pets:pet_create' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> 去添加宠物
+                    </a>
+                </div>
+                {% endif %}
+
                 {% elif not user.is_authenticated %}
                 <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-lg w-100">登录后预约</a>
                 {% endif %}
+
                 {% if can_manage %}
                 <div class="mt-3 d-flex gap-2">
                     <a href="{% url 'services:service_edit' pk=service.pk %}" class="btn btn-outline-secondary flex-fill">

@@ -36,12 +36,17 @@ def service_detail(request, pk):
     service = get_object_or_404(Service.objects.select_related('provider', 'category'), pk=pk)
     reviews = service.reviews.filter(is_approved=True).select_related('user')[:10]
     can_manage = False
+    pets = []
     if request.user.is_authenticated:
         can_manage = request.user.is_admin_role or (request.user.is_provider and service.provider == request.user)
+        if not request.user.is_provider and not request.user.is_admin_role:
+            from pets.models import Pet
+            pets = Pet.objects.filter(owner=request.user)
     return render(request, 'services/service_detail.html', {
         'service': service,
         'reviews': reviews,
         'can_manage': can_manage,
+        'pets': pets,
     })
 
 
