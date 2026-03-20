@@ -8,4 +8,7 @@ urlpatterns = [
     path('<int:pk>/', views.service_detail, name='service_detail'),
     path('create/', views.service_create, name='service_create'),
     path('my/', views.my_services, name='my_services'),
+    path('<int:pk>/edit/', views.service_edit, name='service_edit'),
+    path('<int:pk>/toggle/', views.service_toggle, name='service_toggle'),
+    path('<int:pk>/delete/', views.service_delete, name='service_delete'),
 ]

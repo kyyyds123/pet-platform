@@ -47,10 +47,10 @@
                         <li><a class="dropdown-item" href="{% url 'pets:pet_list' %}"><i class="bi bi-heart"></i> 我的宠物</a></li>
                         <li><a class="dropdown-item" href="{% url 'pets:reminders' %}"><i class="bi bi-bell"></i> 健康提醒</a></li>
                         <li><a class="dropdown-item" href="{% url 'orders:order_list' %}"><i class="bi bi-receipt"></i> 我的订单</a></li>
-                        {% if user.is_provider %}
+                        {% if user.is_provider or user.is_admin_role %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'services:service_create' %}"><i class="bi bi-plus-circle"></i> 发布服务</a></li>
-                        <li><a class="dropdown-item" href="{% url 'services:my_services' %}"><i class="bi bi-shop"></i> 我的服务</a></li>
+                        <li><a class="dropdown-item" href="{% url 'services:my_services' %}"><i class="bi bi-shop"></i> {% if user.is_admin_role %}服务管理{% else %}我的服务{% endif %}</a></li>
                         {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right"></i> 退出</a></li>

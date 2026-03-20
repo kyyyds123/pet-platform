@@ -1,25 +1,61 @@
 {% extends 'base.html' %}
-{% block title %}我的服务{% endblock %}
+{% block title %}{% if user.is_admin_role %}服务管理{% else %}我的服务{% endif %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3><i class="bi bi-shop"></i> 我的服务</h3>
+    <h3><i class="bi bi-shop"></i> {% if user.is_admin_role %}全部服务管理{% else %}我的服务{% endif %}</h3>
     <a href="{% url 'services:service_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> 发布服务</a>
 </div>
 <div class="table-responsive">
-    <table class="table table-hover">
-        <thead><tr><th>服务名称</th><th>类别</th><th>价格</th><th>评分</th><th>状态</th><th>操作</th></tr></thead>
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>服务名称</th>
+                {% if user.is_admin_role %}<th>商家</th>{% endif %}
+                <th>类别</th>
+                <th>价格</th>
+                <th>评分</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
         <tbody>
         {% for s in services %}
         <tr>
-            <td>{{ s.name }}</td>
-            <td>{{ s.category.name }}</td>
+            <td><strong>{{ s.name }}</strong></td>
+            {% if user.is_admin_role %}<td>{{ s.provider.username }}</td>{% endif %}
+            <td><span class="badge bg-primary">{{ s.category.name }}</span></td>
             <td>¥{{ s.price }}</td>
             <td class="rating">{{ s.avg_rating }} <i class="bi bi-star-fill"></i></td>
-            <td><span class="badge bg-{% if s.is_active %}success{% else %}secondary{% endif %}">{% if s.is_active %}上架{% else %}下架{% endif %}</span></td>
-            <td><a href="{% url 'services:service_detail' pk=s.pk %}" class="btn btn-sm btn-outline-primary">查看</a></td>
+            <td>
+                <span class="badge bg-{% if s.is_active %}success{% else %}secondary{% endif %}">
+                    {% if s.is_active %}上架{% else %}下架{% endif %}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <a href="{% url 'services:service_detail' pk=s.pk %}" class="btn btn-outline-primary" title="查看">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{% url 'services:service_edit' pk=s.pk %}" class="btn btn-outline-secondary" title="编辑">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="post" action="{% url 'services:service_toggle' pk=s.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-{% if s.is_active %}warning{% else %}success{% endif %}" title="{% if s.is_active %}下架{% else %}上架{% endif %}">
+                            <i class="bi bi-{% if s.is_active %}pause{% else %}play{% endif %}-fill"></i>
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'services:service_delete' pk=s.pk %}" class="d-inline" onsubmit="return confirm('确定删除「{{ s.name }}」？')">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-danger" title="删除">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-center text-muted py-4">暂未发布服务</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4">暂未发布服务</td></tr>
         {% endfor %}
         </tbody>
     </table>
