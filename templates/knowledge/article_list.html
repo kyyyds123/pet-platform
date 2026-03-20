@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}养宠知识{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-book"></i> 养宠知识</h3>
+
+<!-- Categories -->
+<div class="mb-4">
+    <a href="{% url 'knowledge:article_list' %}" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %} me-1 mb-1">全部</a>
+    {% for cat in categories %}
+    <a href="{% url 'knowledge:article_list' %}?category={{ cat.id }}" class="btn btn-sm {% if current_category == cat.id|stringformat:"s" %}btn-primary{% else %}btn-outline-primary{% endif %} me-1 mb-1">
+        <i class="bi {{ cat.icon }}"></i> {{ cat.name }}
+    </a>
+    {% endfor %}
+</div>
+
+<div class="row g-4">
+    {% for a in articles %}
+    <div class="col-md-4 col-6">
+        <a href="{% url 'knowledge:article_detail' pk=a.pk %}" class="text-decoration-none">
+            <div class="card h-100">
+                {% if a.image %}
+                <img src="{{ a.image.url }}" class="card-img-top" alt="{{ a.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <span class="badge bg-info mb-1">{{ a.category.name }}</span>
+                    {% if a.is_hot %}<span class="badge bg-danger mb-1">热门</span>{% endif %}
+                    <h6 class="card-title text-dark">{{ a.title }}</h6>
+                    <p class="card-text text-muted small">{{ a.summary|truncatechars:80 }}</p>
+                </div>
+                <div class="card-footer bg-white border-0 d-flex justify-content-between text-muted small">
+                    <span><i class="bi bi-eye"></i> {{ a.view_count }}</span>
+                    <span>{{ a.created_at|date:"Y-m-d" }}</span>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted">暂无文章</div>
+    {% endfor %}
+</div>
+{% endblock %}

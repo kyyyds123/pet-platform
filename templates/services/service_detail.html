@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}{{ service.name }}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        {% if service.image %}
+        <img src="{{ service.image.url }}" class="img-fluid rounded-3 mb-3" alt="{{ service.name }}">
+        {% else %}
+        <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mb-3" style="height:300px">
+            <i class="bi bi-image text-muted" style="font-size:4rem"></i>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body">
+                <span class="badge bg-primary mb-2">{{ service.category.name }}</span>
+                <h3>{{ service.name }}</h3>
+                <div class="rating mb-2">
+                    {% for i in "12345" %}{% if forloop.counter <= service.avg_rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endfor %}
+                    <span class="text-muted">{{ service.avg_rating }} 分 ({{ service.rating_count }}条评价)</span>
+                </div>
+                <div class="price-tag mb-3">{{ service.price }}</div>
+                <ul class="list-unstyled text-muted mb-3">
+                    <li><i class="bi bi-clock"></i> 服务时长：{{ service.duration }} 分钟</li>
+                    <li><i class="bi bi-geo-alt"></i> {{ service.address|default:"由商家提供" }}</li>
+                    <li><i class="bi bi-person"></i> 商家：{{ service.provider.username }}</li>
+                </ul>
+                <p>{{ service.description }}</p>
+                {% if user.is_authenticated and not user.is_provider %}
+                <a href="{% url 'orders:order_create' service_id=service.pk %}" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-calendar-check"></i> 立即预约
+                </a>
+                {% elif not user.is_authenticated %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-lg w-100">登录后预约</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 评价 -->
+<div class="mt-4">
+    <h5><i class="bi bi-chat-square-text"></i> 用户评价 ({{ reviews|length }})</h5>
+    {% for r in reviews %}
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <strong>{{ r.user.username }}</strong>
+                <span class="rating">{% for i in "12345" %}{% if forloop.counter <= r.rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endfor %}</span>
+            </div>
+            <p class="mb-1 mt-2">{{ r.content }}</p>
+            <small class="text-muted">{{ r.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted">暂无评价</p>
+    {% endfor %}
+</div>
+{% endblock %}

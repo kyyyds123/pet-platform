@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}服务列表{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-grid"></i> 宠物服务</h3>
+    {% if user.is_authenticated and user.is_provider %}
+    <a href="{% url 'services:service_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> 发布服务</a>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">类别</label>
+                <select name="category" class="form-select">
+                    <option value="">全部类别</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if current_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">关键词</label>
+                <input type="text" name="keyword" class="form-control" placeholder="搜索服务..." value="{{ keyword }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">最低价</label>
+                <input type="number" name="min_price" class="form-control" placeholder="¥0">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">最高价</label>
+                <input type="number" name="max_price" class="form-control" placeholder="¥999">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> 搜索</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for s in services %}
+    <div class="col-md-4 col-6">
+        <div class="card h-100">
+            {% if s.image %}
+            <img src="{{ s.image.url }}" class="card-img-top" alt="{{ s.name }}">
+            {% else %}
+            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:200px">
+                <i class="bi bi-image text-muted" style="font-size:3rem"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <span class="badge bg-primary mb-1">{{ s.category.name }}</span>
+                <h5 class="card-title">{{ s.name }}</h5>
+                <p class="text-muted small">{{ s.description|truncatechars:80 }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="price-tag">{{ s.price }}</span>
+                    <span class="rating">
+                        {% for i in "12345" %}{% if forloop.counter <= s.avg_rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endfor %}
+                        <span class="text-muted small">({{ s.rating_count }})</span>
+                    </span>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0">
+                <a href="{% url 'services:service_detail' pk=s.pk %}" class="btn btn-outline-primary btn-sm w-100">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="bi bi-inbox" style="font-size:3rem"></i>
+        <p class="mt-2">暂无匹配的服务</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

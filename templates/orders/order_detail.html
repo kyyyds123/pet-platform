@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}订单详情{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-body p-4">
+                <h4 class="mb-4"><i class="bi bi-receipt"></i> 订单详情</h4>
+                <table class="table">
+                    <tr><th>订单号</th><td class="font-monospace">{{ order.order_no }}</td></tr>
+                    <tr><th>服务</th><td>{{ order.service.name }}</td></tr>
+                    <tr><th>商家</th><td>{{ order.service.provider.username }}</td></tr>
+                    <tr><th>宠物</th><td>{{ order.pet_name }}</td></tr>
+                    <tr><th>预约时间</th><td>{{ order.appointment_date }} {{ order.appointment_time }}</td></tr>
+                    <tr><th>金额</th><td class="price-tag">{{ order.total_price }}</td></tr>
+                    <tr><th>状态</th><td><span class="badge status-{{ order.status }}">{{ order.get_status_display }}</span></td></tr>
+                    <tr><th>备注</th><td>{{ order.remark|default:"无" }}</td></tr>
+                </table>
+                <div class="d-flex gap-2">
+                    {% if order.status == 'pending' and order.user == user %}
+                    <form method="post" action="{% url 'orders:order_status' pk=order.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="pay">
+                        <button class="btn btn-primary">立即支付</button>
+                    </form>
+                    <form method="post" action="{% url 'orders:order_status' pk=order.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="cancel">
+                        <button class="btn btn-outline-danger">取消订单</button>
+                    </form>
+                    {% endif %}
+                    {% if order.status == 'paid' and order.service.provider == user %}
+                    <form method="post" action="{% url 'orders:order_status' pk=order.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="complete">
+                        <button class="btn btn-success">标记完成</button>
+                    </form>
+                    {% endif %}
+                    {% if order.status == 'completed' and order.user == user and not order.review %}
+                    <a href="{% url 'orders:review_create' order_id=order.pk %}" class="btn btn-warning">去评价</a>
+                    {% endif %}
+                </div>
+
+                {% if order.review %}
+                <div class="mt-4">
+                    <h5>我的评价</h5>
+                    <div class="rating">{% for i in "12345" %}{% if forloop.counter <= order.review.rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endfor %}</div>
+                    <p>{{ order.review.content }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

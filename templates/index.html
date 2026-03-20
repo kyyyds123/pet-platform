@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}社区宠物服务平台 - 首页{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="hero-section text-center">
+    <div class="container">
+        <h1><i class="bi bi-hearts"></i> 社区宠物服务平台</h1>
+        <p class="lead mt-2 mb-4">整合社区宠物资源，让养宠生活更美好</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'services:service_list' %}" class="btn btn-light btn-lg px-4">
+                <i class="bi bi-grid"></i> 浏览服务
+            </a>
+            <a href="{% url 'community:post_list' %}" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-chat-dots"></i> 进入社区
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 健康提醒 -->
+    {% if reminders %}
+    <div class="mb-4">
+        <h5><i class="bi bi-bell-fill text-warning"></i> 健康提醒</h5>
+        {% for r in reminders %}
+        <div class="alert alert-warning d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span><strong>{{ r.pet.name }}</strong> 的 {{ r.name }} 将于 <strong>{{ r.next_date }}</strong> 到期</span>
+            <a href="{% url 'pets:reminders' %}" class="btn btn-sm btn-warning ms-auto">查看</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 服务分类 -->
+    <section class="mb-5">
+        <h4 class="mb-3"><i class="bi bi-grid-3x3-gap"></i> 服务分类</h4>
+        <div class="row g-3">
+            {% for cat in categories %}
+            <div class="col-4 col-md-2 text-center">
+                <a href="{% url 'services:service_list' %}?category={{ cat.id }}" class="text-decoration-none">
+                    <div class="category-icon cat-{{ forloop.counter }}">
+                        <i class="bi {{ cat.icon }}"></i>
+                    </div>
+                    <span class="text-dark small">{{ cat.name }}</span>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12 text-muted">暂无服务分类</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 热门服务 -->
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="bi bi-fire text-danger"></i> 热门服务</h4>
+            <a href="{% url 'services:service_list' %}" class="text-primary text-decoration-none">查看全部 <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="row g-4">
+            {% for s in hot_services %}
+            <div class="col-md-4 col-6">
+                <div class="card h-100">
+                    {% if s.image %}
+                    <img src="{{ s.image.url }}" class="card-img-top" alt="{{ s.name }}">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:200px">
+                        <i class="bi bi-image text-muted" style="font-size:3rem"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <span class="badge bg-primary mb-1">{{ s.category.name }}</span>
+                        <h6 class="card-title">{{ s.name }}</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="price-tag">{{ s.price }}</span>
+                            <span class="rating small">
+                                {% for i in "12345" %}{% if forloop.counter <= s.avg_rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endfor %}
+                                <span class="text-muted">({{ s.rating_count }})</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-0 pt-0">
+                        <a href="{% url 'services:service_detail' pk=s.pk %}" class="btn btn-primary btn-sm w-100">查看详情</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-muted text-center py-4">暂无服务，快来发布第一个吧！</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 养宠知识 -->
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="bi bi-book text-info"></i> 养宠知识</h4>
+            <a href="{% url 'knowledge:article_list' %}" class="text-primary text-decoration-none">更多知识 <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="row g-3">
+            {% for a in hot_articles %}
+            <div class="col-md-3 col-6">
+                <a href="{% url 'knowledge:article_detail' pk=a.pk %}" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <span class="badge bg-info mb-1">{{ a.category.name }}</span>
+                            <h6 class="card-title text-dark">{{ a.title }}</h6>
+                            <p class="card-text text-muted small">{{ a.summary|truncatechars:60 }}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 走失寻回 -->
+    {% if lost_recent %}
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="bi bi-search-heart text-danger"></i> 走失寻回</h4>
+            <a href="{% url 'community:lost_list' %}" class="text-primary text-decoration-none">查看更多 <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="row g-3">
+            {% for lp in lost_recent %}
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body d-flex gap-3">
+                        {% if lp.image %}
+                        <img src="{{ lp.image.url }}" class="rounded" style="width:80px;height:80px;object-fit:cover">
+                        {% else %}
+                        <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width:80px;height:80px">
+                            <i class="bi bi-paw text-muted" style="font-size:1.5rem"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-1">{{ lp.pet_name }}</h6>
+                            <span class="lost-badge lost"><i class="bi bi-exclamation-circle"></i> {{ lp.get_status_display }}</span>
+                            <p class="small text-muted mt-1 mb-0">{{ lp.location }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

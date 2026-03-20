@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}{% if pet %}编辑宠物{% else %}添加宠物{% endif %}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h4 class="mb-4"><i class="bi bi-heart"></i> {% if pet %}编辑宠物{% else %}添加宠物{% endif %}</h4>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">宠物名</label>
+                        <input type="text" name="name" class="form-control" value="{{ pet.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">品种</label>
+                        <input type="text" name="breed" class="form-control" value="{{ pet.breed }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">性别</label>
+                            <select name="gender" class="form-select">
+                                <option value="">未知</option>
+                                <option value="male" {% if pet.gender == 'male' %}selected{% endif %}>公</option>
+                                <option value="female" {% if pet.gender == 'female' %}selected{% endif %}>母</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">年龄</label>
+                            <input type="text" name="age" class="form-control" value="{{ pet.age }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">生日</label>
+                        <input type="date" name="birthday" class="form-control" value="{{ pet.birthday|date:'Y-m-d' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">描述</label>
+                        <textarea name="description" class="form-control" rows="3">{{ pet.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">照片</label>
+                        <input type="file" name="photo" class="form-control" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary">{% if pet %}保存修改{% else %}创建档案{% endif %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

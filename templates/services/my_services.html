@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}我的服务{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-shop"></i> 我的服务</h3>
+    <a href="{% url 'services:service_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> 发布服务</a>
+</div>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead><tr><th>服务名称</th><th>类别</th><th>价格</th><th>评分</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for s in services %}
+        <tr>
+            <td>{{ s.name }}</td>
+            <td>{{ s.category.name }}</td>
+            <td>¥{{ s.price }}</td>
+            <td class="rating">{{ s.avg_rating }} <i class="bi bi-star-fill"></i></td>
+            <td><span class="badge bg-{% if s.is_active %}success{% else %}secondary{% endif %}">{% if s.is_active %}上架{% else %}下架{% endif %}</span></td>
+            <td><a href="{% url 'services:service_detail' pk=s.pk %}" class="btn btn-sm btn-outline-primary">查看</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">暂未发布服务</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

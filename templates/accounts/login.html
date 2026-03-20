@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}登录{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card mt-5">
+            <div class="card-body p-4">
+                <h4 class="text-center mb-4"><i class="bi bi-box-arrow-in-right"></i> 用户登录</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" name="username" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">密码</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                    <p class="text-center mt-3 mb-0">没有账号？<a href="{% url 'accounts:register' %}">立即注册</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

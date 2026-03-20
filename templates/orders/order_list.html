@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}我的订单{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-receipt"></i> 我的订单</h3>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead><tr><th>订单号</th><th>服务</th><th>日期</th><th>金额</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for o in orders %}
+        <tr>
+            <td class="font-monospace">{{ o.order_no }}</td>
+            <td>{{ o.service.name }}</td>
+            <td>{{ o.appointment_date }}</td>
+            <td>¥{{ o.total_price }}</td>
+            <td><span class="badge status-{{ o.status }}">{{ o.get_status_display }}</span></td>
+            <td><a href="{% url 'orders:order_detail' pk=o.pk %}" class="btn btn-sm btn-outline-primary">详情</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">暂无订单</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

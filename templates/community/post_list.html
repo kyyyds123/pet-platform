@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}社区{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-chat-dots"></i> 社区互动</h3>
+    {% if user.is_authenticated %}
+    <a href="{% url 'community:post_create' %}" class="btn btn-primary"><i class="bi bi-pencil"></i> 发帖</a>
+    {% endif %}
+</div>
+
+<!-- Type tabs -->
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+        <a class="nav-link {% if not current_type %}active{% endif %}" href="{% url 'community:post_list' %}">全部</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if current_type == 'note' %}active{% endif %}" href="{% url 'community:post_list' %}?type=note">养宠笔记</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if current_type == 'qa' %}active{% endif %}" href="{% url 'community:post_list' %}?type=qa">问答咨询</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if current_type == 'show' %}active{% endif %}" href="{% url 'community:post_list' %}?type=show">宠物展示</a>
+    </li>
+</ul>
+
+{% for post in posts %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex gap-2 align-items-center mb-2">
+            <span class="post-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+            {% if post.is_pinned %}<span class="badge bg-danger">置顶</span>{% endif %}
+            <small class="text-muted ms-auto">{{ post.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+        <h5><a href="{% url 'community:post_detail' pk=post.pk %}" class="text-decoration-none text-dark">{{ post.title }}</a></h5>
+        <p class="text-muted mb-2">{{ post.content|truncatechars:150 }}</p>
+        <div class="d-flex align-items-center text-muted small">
+            <span><i class="bi bi-person"></i> {{ post.author.username }}</span>
+            <span class="ms-3"><i class="bi bi-heart"></i> {{ post.likes_count }}</span>
+            <span class="ms-3"><i class="bi bi-chat"></i> {{ post.comments_count }}</span>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-chat-square" style="font-size:3rem"></i>
+    <p class="mt-2">还没有帖子，来发布第一条吧！</p>
+</div>
+{% endfor %}
+{% endblock %}

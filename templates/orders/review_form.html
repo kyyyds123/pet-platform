@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}服务评价{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h4 class="mb-4"><i class="bi bi-star"></i> 评价：{{ order.service.name }}</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">评分</label>
+                        <div class="d-flex gap-2" id="rating-group">
+                            {% for i in "12345" %}
+                            <input type="radio" class="btn-check" name="rating" id="r{{ i }}" value="{{ i }}" {% if i == "5" %}checked{% endif %}>
+                            <label class="btn btn-outline-warning" for="r{{ i }}">{{ i }}星</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">评价内容</label>
+                        <textarea name="content" class="form-control" rows="4" required placeholder="请分享您的体验..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">提交评价</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}发布走失信息{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h4 class="mb-4"><i class="bi bi-megaphone"></i> 发布走失/寻回信息</h4>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">宠物名</label>
+                        <input type="text" name="pet_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">品种</label>
+                        <input type="text" name="pet_breed" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">特征描述</label>
+                        <textarea name="pet_description" class="form-control" rows="3" required placeholder="毛色、体型、特殊标记等"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">走失地点</label>
+                        <input type="text" name="location" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">联系方式</label>
+                        <input type="text" name="contact" class="form-control" required placeholder="手机号/微信">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">宠物照片</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">发布信息</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

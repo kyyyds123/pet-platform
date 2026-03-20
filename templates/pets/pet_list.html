@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}我的宠物{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-heart"></i> 我的宠物</h3>
+    <a href="{% url 'pets:pet_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> 添加宠物</a>
+</div>
+<div class="row g-4">
+    {% for pet in pets %}
+    <div class="col-md-4 col-6">
+        <div class="card h-100 text-center p-3">
+            {% if pet.photo %}
+            <img src="{{ pet.photo.url }}" class="pet-avatar mx-auto mb-2">
+            {% else %}
+            <div class="pet-avatar bg-light d-flex align-items-center justify-content-center mx-auto mb-2">
+                <i class="bi bi-paw" style="font-size:1.5rem"></i>
+            </div>
+            {% endif %}
+            <h5>{{ pet.name }}</h5>
+            <p class="text-muted small mb-2">{{ pet.breed }} · {{ pet.get_gender_display|default:"未知" }}</p>
+            <a href="{% url 'pets:pet_detail' pk=pet.pk %}" class="btn btn-outline-primary btn-sm">查看详情</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="bi bi-paw" style="font-size:3rem"></i>
+        <p class="mt-2">还没有宠物档案，快添加你的第一只宠物吧！</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}走失寻回{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-search-heart"></i> 走失寻回</h3>
+    {% if user.is_authenticated %}
+    <a href="{% url 'community:lost_create' %}" class="btn btn-danger"><i class="bi bi-megaphone"></i> 发布信息</a>
+    {% endif %}
+</div>
+
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item"><a class="nav-link {% if not current_status %}active{% endif %}" href="{% url 'community:lost_list' %}">全部</a></li>
+    <li class="nav-item"><a class="nav-link {% if current_status == 'lost' %}active{% endif %}" href="{% url 'community:lost_list' %}?status=lost">走失中</a></li>
+    <li class="nav-item"><a class="nav-link {% if current_status == 'found' %}active{% endif %}" href="{% url 'community:lost_list' %}?status=found">已找到</a></li>
+</ul>
+
+<div class="row g-3">
+    {% for lp in lost_pets %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex gap-3">
+                    {% if lp.image %}
+                    <img src="{{ lp.image.url }}" class="rounded" style="width:100px;height:100px;object-fit:cover">
+                    {% else %}
+                    <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width:100px;height:100px">
+                        <i class="bi bi-paw text-muted" style="font-size:2rem"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h5>{{ lp.pet_name }}</h5>
+                        <span class="lost-badge {% if lp.status == 'lost' %}lost{% else %}found{% endif %}">{{ lp.get_status_display }}</span>
+                        {% if lp.pet_breed %}<p class="small text-muted mb-0">品种：{{ lp.pet_breed }}</p>{% endif %}
+                    </div>
+                </div>
+                <p class="mt-2 mb-1"><i class="bi bi-geo-alt"></i> {{ lp.location }}</p>
+                <p class="small text-muted mb-1">联系方式：{{ lp.contact }}</p>
+                <p class="small text-muted">{{ lp.created_at|date:"Y-m-d H:i" }}</p>
+                {% if user == lp.author and lp.status == 'lost' %}
+                <form method="post" action="{% url 'community:lost_update' pk=lp.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="found">
+                    <button class="btn btn-sm btn-success">标记已找到</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5 text-muted">暂无信息</div>
+    {% endfor %}
+</div>
+{% endblock %}

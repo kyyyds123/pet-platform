@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}个人资料{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h4 class="mb-4"><i class="bi bi-person-gear"></i> 个人资料</h4>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="text-center mb-4">
+                        {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" class="rounded-circle mb-2" style="width:100px;height:100px;object-fit:cover">
+                        {% else %}
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width:100px;height:100px;font-size:2.5rem">
+                            {{ user.username.0|upper }}
+                        </div>
+                        {% endif %}
+                        <input type="file" name="avatar" class="form-control form-control-sm mt-2" accept="image/*">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">身份</label>
+                        <input type="text" class="form-control" value="{{ user.get_role_display }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">手机号</label>
+                        <input type="text" name="phone" class="form-control" value="{{ user.phone }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">地址</label>
+                        <input type="text" name="address" class="form-control" value="{{ user.address }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">个人简介</label>
+                        <textarea name="bio" class="form-control" rows="3">{{ user.bio }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存修改</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
