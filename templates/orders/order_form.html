@@ -11,11 +11,37 @@
                     <strong>价格：</strong>¥{{ service.price }}<br>
                     <strong>时长：</strong>{{ service.duration }} 分钟
                 </div>
+
+                {% if pets %}
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">宠物名</label>
-                        <input type="text" name="pet_name" class="form-control" required>
+                        <label class="form-label"><i class="bi bi-paw"></i> 选择宠物</label>
+                        <div class="row g-2">
+                            {% for pet in pets %}
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="pet_id" id="pet{{ pet.pk }}" value="{{ pet.pk }}" {% if forloop.first %}checked{% endif %} required>
+                                <label class="btn btn-outline-primary w-100 d-flex align-items-center gap-2 py-3" for="pet{{ pet.pk }}">
+                                    {% if pet.photo %}
+                                    <img src="{{ pet.photo.url }}" class="rounded-circle" style="width:40px;height:40px;object-fit:cover">
+                                    {% else %}
+                                    <span class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px">
+                                        <i class="bi bi-paw"></i>
+                                    </span>
+                                    {% endif %}
+                                    <div class="text-start">
+                                        <strong>{{ pet.name }}</strong><br>
+                                        <small class="text-muted">{{ pet.breed }}</small>
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-2">
+                            <a href="{% url 'pets:pet_create' %}" class="text-decoration-none small">
+                                <i class="bi bi-plus-circle"></i> 添加新宠物
+                            </a>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">预约日期</label>
@@ -31,6 +57,16 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-lg w-100">确认预约</button>
                 </form>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-paw text-muted" style="font-size:3rem"></i>
+                    <h5 class="mt-3">您还没有添加宠物</h5>
+                    <p class="text-muted">预约服务前，请先添加您的宠物档案</p>
+                    <a href="{% url 'pets:pet_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> 去添加宠物
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -4,18 +4,27 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Order, Review
 from services.models import Service
+from pets.models import Pet
 
 
 @login_required
 def order_create(request, service_id):
     service = get_object_or_404(Service, pk=service_id, is_active=True)
+    pets = Pet.objects.filter(owner=request.user)
 
     if request.method == 'POST':
+        pet_id = request.POST.get('pet_id')
+        pet_name = request.POST.get('pet_name', '')
+
+        if pet_id:
+            pet = get_object_or_404(Pet, pk=pet_id, owner=request.user)
+            pet_name = pet.name
+
         order = Order.objects.create(
             order_no=uuid.uuid4().hex[:16].upper(),
             user=request.user,
             service=service,
-            pet_name=request.POST['pet_name'],
+            pet_name=pet_name,
             appointment_date=request.POST['appointment_date'],
             appointment_time=request.POST['appointment_time'],
             total_price=service.price,
@@ -25,7 +34,10 @@ def order_create(request, service_id):
         messages.success(request, f'预约成功！订单号：{order.order_no}')
         return redirect('orders:order_detail', pk=order.pk)
 
-    return render(request, 'orders/order_form.html', {'service': service})
+    return render(request, 'orders/order_form.html', {
+        'service': service,
+        'pets': pets,
+    })
 
 
 @login_required
@@ -84,7 +96,6 @@ def review_create(request, order_id):
             rating=rating,
             content=request.POST['content'],
         )
-        # Update service avg_rating
         service = order.service
         reviews = service.reviews.all()
         service.avg_rating = round(sum(r.rating for r in reviews) / reviews.count(), 1)
