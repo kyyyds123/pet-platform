@@ -52,8 +52,8 @@ def service_detail(request, pk):
 
 @login_required
 def service_create(request):
-    if not request.user.is_provider and not request.user.is_admin_role:
-        messages.error(request, '仅商家或管理员可以发布服务')
+    if not request.user.is_provider:
+        messages.error(request, '仅商家可以发布服务')
         return redirect('services:service_list')
 
     if request.method == 'POST':
@@ -77,8 +77,8 @@ def service_create(request):
 @login_required
 def service_edit(request, pk):
     service = get_object_or_404(Service, pk=pk)
-    if not (request.user.is_admin_role or (request.user.is_provider and service.provider == request.user)):
-        messages.error(request, '无权编辑此服务')
+    if not (request.user.is_provider and service.provider == request.user):
+        messages.error(request, '仅商家可编辑自己的服务')
         return redirect('services:service_list')
 
     if request.method == 'POST':
@@ -132,4 +132,7 @@ def my_services(request):
         services = Service.objects.all().select_related('category', 'provider')
     else:
         services = Service.objects.filter(provider=request.user).select_related('category')
-    return render(request, 'services/my_services.html', {'services': services})
+    return render(request, 'services/my_services.html', {
+        'services': services,
+        'is_admin': request.user.is_admin_role,
+    })
