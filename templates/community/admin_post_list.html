@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}帖子审核 - 管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-shield-check"></i> 帖子审核</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'community:admin_comments' %}" class="btn btn-outline-secondary btn-sm">评论审核</a>
+        <a href="{% url 'community:admin_lost' %}" class="btn btn-outline-secondary btn-sm">走失信息</a>
+    </div>
+</div>
+
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item"><a class="nav-link {% if not current_type %}active{% endif %}" href="{% url 'community:admin_posts' %}">全部</a></li>
+    <li class="nav-item"><a class="nav-link {% if current_type == 'note' %}active{% endif %}" href="{% url 'community:admin_posts' %}?type=note">养宠笔记</a></li>
+    <li class="nav-item"><a class="nav-link {% if current_type == 'qa' %}active{% endif %}" href="{% url 'community:admin_posts' %}?type=qa">问答咨询</a></li>
+    <li class="nav-item"><a class="nav-link {% if current_type == 'show' %}active{% endif %}" href="{% url 'community:admin_posts' %}?type=show">宠物展示</a></li>
+</ul>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>标题</th>
+                <th>类型</th>
+                <th>作者</th>
+                <th>点赞</th>
+                <th>评论</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for post in posts %}
+        <tr>
+            <td>
+                {% if post.is_pinned %}<span class="badge bg-danger me-1">置顶</span>{% endif %}
+                <a href="{% url 'community:post_detail' pk=post.pk %}" class="text-decoration-none">{{ post.title }}</a>
+            </td>
+            <td><span class="post-type {{ post.post_type }}">{{ post.get_post_type_display }}</span></td>
+            <td>{{ post.author.username }}</td>
+            <td>{{ post.likes_count }}</td>
+            <td>{{ post.comments_count }}</td>
+            <td class="small text-muted">{{ post.created_at|date:"m-d H:i" }}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <form method="post" action="{% url 'community:admin_post_pin' pk=post.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-{% if post.is_pinned %}secondary{% else %}warning{% endif %}" title="{% if post.is_pinned %}取消置顶{% else %}置顶{% endif %}">
+                            <i class="bi bi-pin{% if post.is_pinned %}-angle{% endif %}-fill"></i>
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'community:admin_post_delete' pk=post.pk %}" class="d-inline" onsubmit="return confirm('确定删除帖子「{{ post.title }}」？')">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-danger" title="删除"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">暂无帖子</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

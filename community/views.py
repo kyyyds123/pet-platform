@@ -108,3 +108,105 @@ def lost_pet_update(request, pk):
         lost_pet.save()
         messages.success(request, '状态已更新')
     return redirect('community:lost_list')
+
+
+# ========== 管理员审核 ==========
+
+@login_required
+def admin_post_list(request):
+    """管理员：帖子审核列表"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    posts = Post.objects.all().select_related('author')
+    post_type = request.GET.get('type')
+    if post_type:
+        posts = posts.filter(post_type=post_type)
+    return render(request, 'community/admin_post_list.html', {
+        'posts': posts,
+        'current_type': post_type,
+    })
+
+
+@login_required
+def admin_post_pin(request, pk):
+    """管理员：置顶/取消置顶帖子"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    post = get_object_or_404(Post, pk=pk)
+    post.is_pinned = not post.is_pinned
+    post.save()
+    status = '置顶' if post.is_pinned else '取消置顶'
+    messages.success(request, f'帖子已{status}')
+    return redirect('community:admin_posts')
+
+
+@login_required
+def admin_post_delete(request, pk):
+    """管理员：删除帖子"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    post = get_object_or_404(Post, pk=pk)
+    if request.method == 'POST':
+        title = post.title
+        post.delete()
+        messages.success(request, f'帖子「{title}」已删除')
+    return redirect('community:admin_posts')
+
+
+@login_required
+def admin_comment_list(request):
+    """管理员：评论审核列表"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    comments = Comment.objects.all().select_related('author', 'post')
+    return render(request, 'community/admin_comment_list.html', {'comments': comments})
+
+
+@login_required
+def admin_comment_delete(request, pk):
+    """管理员：删除评论"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    comment = get_object_or_404(Comment, pk=pk)
+    if request.method == 'POST':
+        post = comment.post
+        post.comments_count = max(0, post.comments_count - 1)
+        post.save()
+        comment.delete()
+        messages.success(request, '评论已删除')
+    return redirect('community:admin_comments')
+
+
+@login_required
+def admin_lost_list(request):
+    """管理员：走失信息管理"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    lost_pets = LostPet.objects.all().select_related('author')
+    return render(request, 'community/admin_lost_list.html', {'lost_pets': lost_pets})
+
+
+@login_required
+def admin_lost_delete(request, pk):
+    """管理员：删除走失信息"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    lost_pet = get_object_or_404(LostPet, pk=pk)
+    if request.method == 'POST':
+        lost_pet.delete()
+        messages.success(request, '信息已删除')
+    return redirect('community:admin_lost')

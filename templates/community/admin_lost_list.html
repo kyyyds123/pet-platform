@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}走失信息管理 - 管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-search-heart"></i> 走失信息管理</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'community:admin_posts' %}" class="btn btn-outline-secondary btn-sm">帖子审核</a>
+        <a href="{% url 'community:admin_comments' %}" class="btn btn-outline-secondary btn-sm">评论审核</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>宠物名</th>
+                <th>品种</th>
+                <th>地点</th>
+                <th>发布者</th>
+                <th>状态</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for lp in lost_pets %}
+        <tr>
+            <td>
+                <strong>{{ lp.pet_name }}</strong>
+                {% if lp.image %} <i class="bi bi-image text-muted small"></i>{% endif %}
+            </td>
+            <td>{{ lp.pet_breed|default:"-" }}</td>
+            <td>{{ lp.location }}</td>
+            <td>{{ lp.author.username }}</td>
+            <td><span class="lost-badge {% if lp.status == 'lost' %}lost{% else %}found{% endif %}">{{ lp.get_status_display }}</span></td>
+            <td class="small text-muted">{{ lp.created_at|date:"m-d H:i" }}</td>
+            <td>
+                <form method="post" action="{% url 'community:admin_lost_delete' pk=lp.pk %}" onsubmit="return confirm('确定删除此信息？')">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> 删除</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">暂无信息</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

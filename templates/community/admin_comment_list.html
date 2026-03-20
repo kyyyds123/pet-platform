@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}评论审核 - 管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-chat-square-text"></i> 评论审核</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'community:admin_posts' %}" class="btn btn-outline-secondary btn-sm">帖子审核</a>
+        <a href="{% url 'community:admin_lost' %}" class="btn btn-outline-secondary btn-sm">走失信息</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>评论内容</th>
+                <th>所属帖子</th>
+                <th>作者</th>
+                <th>时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in comments %}
+        <tr>
+            <td>{{ c.content|truncatechars:60 }}</td>
+            <td><a href="{% url 'community:post_detail' pk=c.post.pk %}" class="text-decoration-none">{{ c.post.title }}</a></td>
+            <td>{{ c.author.username }}</td>
+            <td class="small text-muted">{{ c.created_at|date:"m-d H:i" }}</td>
+            <td>
+                <form method="post" action="{% url 'community:admin_comment_delete' pk=c.pk %}" onsubmit="return confirm('确定删除此评论？')">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> 删除</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">暂无评论</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
