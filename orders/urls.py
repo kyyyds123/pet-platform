@@ -9,4 +9,5 @@ urlpatterns = [
     path('create/<int:service_id>/', views.order_create, name='order_create'),
     path('<int:pk>/status/', views.order_status, name='order_status'),
     path('<int:order_id>/review/', views.review_create, name='review_create'),
+    path('<int:order_id>/add-record/', views.order_add_record, name='order_add_record'),
 ]

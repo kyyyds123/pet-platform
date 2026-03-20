@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}添加健康记录{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h4 class="mb-4"><i class="bi bi-clipboard-plus"></i> 为 {{ pet.name }} 添加健康记录</h4>
+                <div class="alert alert-info small">
+                    <strong>订单：</strong>{{ order.order_no }}<br>
+                    <strong>服务：</strong>{{ order.service.name }}<br>
+                    <strong>宠物主人：</strong>{{ order.user.username }}
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">记录类型</label>
+                        <select name="record_type" class="form-select">
+                            <option value="vaccine">疫苗</option>
+                            <option value="checkup">体检</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">名称</label>
+                        <input type="text" name="name" class="form-control" required placeholder="如：狂犬疫苗、年度体检">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">日期</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">下次日期（到期提醒）</label>
+                        <input type="date" name="next_date" class="form-control">
+                        <div class="form-text">设置后将自动在到期前提醒宠物主人</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">医院</label>
+                        <input type="text" name="hospital" class="form-control" value="{{ order.service.provider.username }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">添加记录</button>
+                        <a href="{% url 'orders:order_detail' pk=order.pk %}" class="btn btn-outline-secondary">返回订单</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

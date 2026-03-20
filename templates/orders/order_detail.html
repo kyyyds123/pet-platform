@@ -41,6 +41,20 @@
                     {% endif %}
                 </div>
 
+                {% if is_medical_provider %}
+                <div class="alert alert-info mt-4">
+                    <h6><i class="bi bi-clipboard-plus"></i> 添加健康记录</h6>
+                    <p class="mb-2 small">服务已完成，您可以为客户的宠物「{{ order.pet_name }}」添加疫苗/体检记录</p>
+                    {% if customer_pets %}
+                    <a href="{% url 'orders:order_add_record' order_id=order.pk %}" class="btn btn-info btn-sm">
+                        <i class="bi bi-plus-circle"></i> 添加健康记录
+                    </a>
+                    {% else %}
+                    <span class="text-muted small">客户尚未创建该宠物的档案，无法添加记录</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
                 {% if order.review %}
                 <div class="mt-4">
                     <h5>我的评价</h5>

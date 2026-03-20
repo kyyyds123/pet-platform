@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Order, Review
 from services.models import Service
-from pets.models import Pet
+from pets.models import Pet, VaccineRecord
 
 
 @login_required
@@ -51,11 +51,29 @@ def order_list(request):
 
 @login_required
 def order_detail(request, pk):
-    order = get_object_or_404(Order, pk=pk)
+    order = get_object_or_404(Order.objects.select_related('service__category', 'user'), pk=pk)
     if order.user != request.user and order.service.provider != request.user:
         messages.error(request, '无权查看此订单')
         return redirect('orders:order_list')
-    return render(request, 'orders/order_detail.html', {'order': order})
+
+    # 检查是否是宠物医疗类商家，且订单已完成
+    is_medical_provider = (
+        request.user.is_provider
+        and order.service.provider == request.user
+        and order.service.category.name == '宠物医疗'
+        and order.status == 'completed'
+    )
+
+    # 查找客户的宠物（用于添加健康记录）
+    customer_pets = []
+    if is_medical_provider:
+        customer_pets = Pet.objects.filter(owner=order.user, name=order.pet_name)
+
+    return render(request, 'orders/order_detail.html', {
+        'order': order,
+        'is_medical_provider': is_medical_provider,
+        'customer_pets': customer_pets,
+    })
 
 
 @login_required
@@ -105,3 +123,33 @@ def review_create(request, order_id):
         return redirect('orders:order_detail', pk=order_id)
 
     return render(request, 'orders/review_form.html', {'order': order})
+
+
+@login_required
+def order_add_record(request, order_id):
+    """宠物医疗商家为客户的宠物添加健康记录"""
+    order = get_object_or_404(
+        Order.objects.select_related('service__category'),
+        pk=order_id,
+        service__provider=request.user,
+        service__category__name='宠物医疗',
+        status='completed',
+    )
+
+    # 找到客户的对应宠物
+    pet = get_object_or_404(Pet, owner=order.user, name=order.pet_name)
+
+    if request.method == 'POST':
+        VaccineRecord.objects.create(
+            pet=pet,
+            record_type=request.POST['record_type'],
+            name=request.POST['name'],
+            date=request.POST['date'],
+            next_date=request.POST.get('next_date') or None,
+            hospital=request.POST.get('hospital', ''),
+            notes=request.POST.get('notes', ''),
+        )
+        messages.success(request, f'已为 {pet.name} 添加健康记录')
+        return redirect('orders:order_detail', pk=order.pk)
+
+    return render(request, 'orders/add_record.html', {'order': order, 'pet': pet})
