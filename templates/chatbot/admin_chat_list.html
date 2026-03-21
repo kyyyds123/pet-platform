@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}对话记录管理{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-chat-dots"></i> 客服对话记录</h3>
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>会话ID</th>
+                <th>用户</th>
+                <th>消息数</th>
+                <th>首条消息</th>
+                <th>最新消息</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sessions %}
+            <tr>
+                <td><code>{{ s.session_key|truncatechars:12 }}</code></td>
+                <td>{{ s.user|default:"匿名" }}</td>
+                <td><span class="badge bg-primary">{{ s.count }}</span></td>
+                <td>{{ s.first_msg.content|truncatechars:30 }}</td>
+                <td>{{ s.last_msg.created_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                    <a href="{% url 'chatbot:admin_chat_detail' session_key=s.session_key %}" class="btn btn-sm btn-outline-primary">查看详情</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">暂无对话记录</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

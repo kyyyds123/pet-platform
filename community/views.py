@@ -2,17 +2,32 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from .models import Post, Comment, Like, LostPet
+from django.db.models import Q
+from .models import Post, Comment, Like, LostPet, SavedPost, SavedLost
 
 
 def post_list(request):
     posts = Post.objects.all().select_related('author')
     post_type = request.GET.get('type')
+    sort = request.GET.get('sort', 'time')
+    keyword = request.GET.get('keyword', '')
+
     if post_type:
         posts = posts.filter(post_type=post_type)
+    if keyword:
+        posts = posts.filter(
+            Q(title__icontains=keyword) | Q(content__icontains=keyword)
+        )
+    if sort == 'hot':
+        posts = posts.order_by('-is_pinned', '-likes_count', '-comments_count')
+    else:
+        posts = posts.order_by('-is_pinned', '-created_at')
+
     return render(request, 'community/post_list.html', {
         'posts': posts,
         'current_type': post_type,
+        'current_sort': sort,
+        'keyword': keyword,
     })
 
 
@@ -108,6 +123,40 @@ def lost_pet_update(request, pk):
         lost_pet.save()
         messages.success(request, '状态已更新')
     return redirect('community:lost_list')
+
+
+@login_required
+def post_save(request, pk):
+    """收藏帖子"""
+    post = get_object_or_404(Post, pk=pk)
+    saved, created = SavedPost.objects.get_or_create(post=post, user=request.user)
+    if not created:
+        saved.delete()
+    return JsonResponse({'saved': created})
+
+
+@login_required
+def lost_save(request, pk):
+    """收藏走失信息"""
+    lost_pet = get_object_or_404(LostPet, pk=pk)
+    saved, created = SavedLost.objects.get_or_create(lost_pet=lost_pet, user=request.user)
+    if not created:
+        saved.delete()
+    return JsonResponse({'saved': created})
+
+
+@login_required
+def my_saved_posts(request):
+    """我的收藏帖子"""
+    saved = SavedPost.objects.filter(user=request.user).select_related('post__author')
+    return render(request, 'community/saved_posts.html', {'saved_posts': saved})
+
+
+@login_required
+def my_saved_lost(request):
+    """我的收藏走失信息"""
+    saved = SavedLost.objects.filter(user=request.user).select_related('lost_pet__author')
+    return render(request, 'community/saved_lost.html', {'saved_lost': saved})
 
 
 # ========== 管理员审核 ==========

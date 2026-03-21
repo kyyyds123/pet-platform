@@ -10,4 +10,9 @@ urlpatterns = [
     path('<int:pk>/status/', views.order_status, name='order_status'),
     path('<int:order_id>/review/', views.review_create, name='review_create'),
     path('<int:order_id>/add-record/', views.order_add_record, name='order_add_record'),
+
+    # 管理员评价管理
+    path('admin/reviews/', views.admin_review_list, name='admin_reviews'),
+    path('admin/reviews/<int:pk>/approve/', views.admin_review_approve, name='admin_review_approve'),
+    path('admin/reviews/<int:pk>/reject/', views.admin_review_reject, name='admin_review_reject'),
 ]

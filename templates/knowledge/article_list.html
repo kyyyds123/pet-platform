@@ -3,11 +3,24 @@
 {% block content %}
 <h3 class="mb-4"><i class="bi bi-book"></i> 养宠知识</h3>
 
+<!-- 搜索栏 -->
+<form method="get" class="mb-3">
+    {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+    <div class="input-group">
+        <input type="text" name="keyword" class="form-control" placeholder="搜索知识文章..." value="{{ keyword }}">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> 搜索</button>
+        {% if keyword %}
+        <a href="{% url 'knowledge:article_list' %}{% if current_category %}?category={{ current_category }}{% endif %}" class="btn btn-outline-secondary">清除</a>
+        {% endif %}
+    </div>
+</form>
+
 <!-- Categories -->
 <div class="mb-4">
-    <a href="{% url 'knowledge:article_list' %}" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %} me-1 mb-1">全部</a>
+    {% with kws="" %}{% if keyword %}{% with kws="&keyword="|add:keyword %}{% endwith %}{% endif %}{% endwith %}
+    <a href="{% url 'knowledge:article_list' %}{% if keyword %}?keyword={{ keyword }}{% endif %}" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %} me-1 mb-1">全部</a>
     {% for cat in categories %}
-    <a href="{% url 'knowledge:article_list' %}?category={{ cat.id }}" class="btn btn-sm {% if current_category == cat.id|stringformat:"s" %}btn-primary{% else %}btn-outline-primary{% endif %} me-1 mb-1">
+    <a href="{% url 'knowledge:article_list' %}?category={{ cat.id }}{% if keyword %}&keyword={{ keyword }}{% endif %}" class="btn btn-sm {% if current_category == cat.id|stringformat:"s" %}btn-primary{% else %}btn-outline-primary{% endif %} me-1 mb-1">
         <i class="bi {{ cat.icon }}"></i> {{ cat.name }}
     </a>
     {% endfor %}

@@ -39,3 +39,27 @@ class KnowledgeArticle(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class KnowledgeLike(models.Model):
+    """知识文章点赞"""
+    article = models.ForeignKey(KnowledgeArticle, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('article', 'user')
+        verbose_name = '文章点赞'
+        verbose_name_plural = '文章点赞'
+
+
+class KnowledgeFavorite(models.Model):
+    """知识文章收藏"""
+    article = models.ForeignKey(KnowledgeArticle, on_delete=models.CASCADE, related_name='favorites')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('article', 'user')
+        verbose_name = '文章收藏'
+        verbose_name_plural = '文章收藏'

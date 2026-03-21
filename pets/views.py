@@ -95,6 +95,19 @@ def reminders(request):
 def mark_reminded(request, pk):
     record = get_object_or_404(VaccineRecord, pk=pk, pet__owner=request.user)
     record.is_reminded = True
+    # 如果有下次日期，自动将下次日期设为新的提醒基准
+    if record.next_date:
+        # 根据记录类型推算周期
+        from datetime import timedelta
+        if record.record_type == 'vaccine':
+            # 疫苗常见周期：1年
+            cycle = timedelta(days=365)
+        else:
+            # 体检常见周期：1年
+            cycle = timedelta(days=365)
+        record.date = record.next_date
+        record.next_date = record.next_date + cycle
+        record.is_reminded = False
     record.save()
     messages.success(request, '已标记完成')
     return redirect('pets:reminders')

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}人工咨询管理{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-headset"></i> 人工咨询请求</h3>
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>用户</th>
+                <th>状态</th>
+                <th>发起时间</th>
+                <th>结束时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in requests %}
+            <tr>
+                <td>{{ r.user.username }}</td>
+                <td>
+                    {% if r.status == 'pending' %}<span class="badge bg-warning">等待接入</span>
+                    {% elif r.status == 'active' %}<span class="badge bg-success">咨询中</span>
+                    {% else %}<span class="badge bg-secondary">已结束</span>{% endif %}
+                </td>
+                <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ r.closed_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                <td>
+                    {% if r.status == 'pending' %}
+                    <form method="post" action="{% url 'chatbot:admin_manual_respond' pk=r.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-success">接入</button>
+                    </form>
+                    {% elif r.status == 'active' %}
+                    <a href="{% url 'chatbot:admin_chat_detail' session_key=r.session_key %}" class="btn btn-sm btn-outline-primary me-1">查看对话</a>
+                    <form method="post" action="{% url 'chatbot:admin_manual_close' pk=r.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-danger">结束</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">暂无咨询请求</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

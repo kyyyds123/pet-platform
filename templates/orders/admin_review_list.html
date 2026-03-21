@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}评价管理{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-star"></i> 评价管理</h3>
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>用户</th>
+                <th>服务</th>
+                <th>评分</th>
+                <th>评价内容</th>
+                <th>审核状态</th>
+                <th>时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reviews %}
+            <tr>
+                <td>{{ r.user.username }}</td>
+                <td>{{ r.service.name|truncatechars:20 }}</td>
+                <td>{% for i in "12345" %}{% if forloop.counter <= r.rating %}<i class="bi bi-star-fill text-warning"></i>{% else %}<i class="bi bi-star text-muted"></i>{% endif %}{% endfor %}</td>
+                <td>{{ r.content|truncatechars:50 }}</td>
+                <td>
+                    {% if r.is_approved %}<span class="badge bg-success">已审核</span>
+                    {% else %}<span class="badge bg-warning">待审核</span>{% endif %}
+                </td>
+                <td>{{ r.created_at|date:"Y-m-d" }}</td>
+                <td>
+                    {% if not r.is_approved %}
+                    <form method="post" action="{% url 'orders:admin_review_approve' pk=r.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-success">通过</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'orders:admin_review_reject' pk=r.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-danger">屏蔽</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-4">暂无评价</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

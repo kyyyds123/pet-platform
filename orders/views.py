@@ -153,3 +153,46 @@ def order_add_record(request, order_id):
         return redirect('orders:order_detail', pk=order.pk)
 
     return render(request, 'orders/add_record.html', {'order': order, 'pet': pet})
+
+
+# ========== 管理员评价管理 ==========
+
+@login_required
+def admin_review_list(request):
+    """管理员：评价列表"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    reviews = Review.objects.all().select_related('user', 'service', 'order')
+    return render(request, 'orders/admin_review_list.html', {'reviews': reviews})
+
+
+@login_required
+def admin_review_approve(request, pk):
+    """管理员：审核通过评价"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    review = get_object_or_404(Review, pk=pk)
+    if request.method == 'POST':
+        review.is_approved = True
+        review.save()
+        messages.success(request, '评价已审核通过')
+    return redirect('orders:admin_reviews')
+
+
+@login_required
+def admin_review_reject(request, pk):
+    """管理员：屏蔽评价"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    review = get_object_or_404(Review, pk=pk)
+    if request.method == 'POST':
+        review.is_approved = False
+        review.save()
+        messages.success(request, '评价已屏蔽')
+    return redirect('orders:admin_reviews')

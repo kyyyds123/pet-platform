@@ -30,6 +30,8 @@ class Service(models.Model):
     duration = models.IntegerField('服务时长(分钟)', default=60)
     image = models.ImageField('封面图片', upload_to='services/', blank=True)
     address = models.CharField('服务地址', max_length=200, blank=True)
+    longitude = models.FloatField('经度', null=True, blank=True)
+    latitude = models.FloatField('纬度', null=True, blank=True)
     is_active = models.BooleanField('是否上架', default=True)
     avg_rating = models.FloatField('平均评分', default=0)
     rating_count = models.IntegerField('评价数量', default=0)

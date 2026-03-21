@@ -1,6 +1,11 @@
-from django.shortcuts import render
+import uuid
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import models
+from .models import ChatMessage, ManualRequest
 
 
 FAQ_RULES = [
@@ -51,21 +56,171 @@ FAQ_RULES = [
 ]
 
 
+def _get_session_key(request):
+    if not request.session.session_key:
+        request.session.create()
+    return request.session.session_key
+
+
 def chatbot_page(request):
-    return render(request, 'chatbot/chat.html')
+    session_key = _get_session_key(request)
+    messages_qs = ChatMessage.objects.filter(session_key=session_key)
+    if request.user.is_authenticated:
+        messages_qs = ChatMessage.objects.filter(
+            models.Q(session_key=session_key) | models.Q(user=request.user)
+        )
+    return render(request, 'chatbot/chat.html', {
+        'chat_messages': messages_qs.order_by('created_at')[:100],
+    })
 
 
-@require_POST
 def chatbot_reply(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
     user_msg = request.POST.get('message', '').strip()
     if not user_msg:
         return JsonResponse({'reply': '请输入您的问题'})
 
+    session_key = _get_session_key(request)
+
+    # 保存用户消息
+    ChatMessage.objects.create(
+        session_key=session_key,
+        user=request.user if request.user.is_authenticated else None,
+        role='user',
+        content=user_msg,
+    )
+
+    # 检查是否有人工咨询请求正在进行
+    if request.user.is_authenticated:
+        active_request = ManualRequest.objects.filter(
+            user=request.user, status='active'
+        ).first()
+        if active_request:
+            reply = '您正在人工咨询中，请等待客服回复。'
+            ChatMessage.objects.create(
+                session_key=session_key, user=request.user,
+                role='bot', content=reply,
+            )
+            return JsonResponse({'reply': reply, 'manual': True})
+
+    # FAQ 匹配
     for rule in FAQ_RULES:
         for kw in rule['keywords']:
             if kw in user_msg:
+                ChatMessage.objects.create(
+                    session_key=session_key,
+                    user=request.user if request.user.is_authenticated else None,
+                    role='bot', content=rule['answer'],
+                )
                 return JsonResponse({'reply': rule['answer']})
 
-    return JsonResponse({
-        'reply': '抱歉，我暂时无法理解您的问题。您可以尝试换个问法，或联系人工客服获取帮助。常见问题包括：预约、支付、退款、注册、评价、宠物档案、走失寻回、疫苗提醒等。'
+    reply = '抱歉，我暂时无法理解您的问题。您可以点击下方"转人工客服"获取帮助，或尝试换个问法。'
+    ChatMessage.objects.create(
+        session_key=session_key,
+        user=request.user if request.user.is_authenticated else None,
+        role='bot', content=reply,
+    )
+    return JsonResponse({'reply': reply})
+
+
+@login_required
+def request_manual(request):
+    """请求人工咨询"""
+    if request.method == 'POST':
+        existing = ManualRequest.objects.filter(
+            user=request.user,
+            status__in=['pending', 'active']
+        ).first()
+        if existing:
+            messages.info(request, '您已有人工咨询请求')
+        else:
+            session_key = _get_session_key(request)
+            ManualRequest.objects.create(user=request.user, session_key=session_key)
+            messages.success(request, '已提交人工咨询请求，请等待客服接入')
+    return redirect('chatbot:chat')
+
+
+# ========== 管理员功能 ==========
+
+@login_required
+def admin_chat_list(request):
+    """管理员：查看所有对话记录"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    sessions = ChatMessage.objects.values('session_key').distinct()
+    session_data = []
+    for s in sessions:
+        sk = s['session_key']
+        first_msg = ChatMessage.objects.filter(session_key=sk).order_by('created_at').first()
+        last_msg = ChatMessage.objects.filter(session_key=sk).order_by('-created_at').first()
+        count = ChatMessage.objects.filter(session_key=sk).count()
+        session_data.append({
+            'session_key': sk,
+            'first_msg': first_msg,
+            'last_msg': last_msg,
+            'count': count,
+            'user': first_msg.user if first_msg else None,
+        })
+
+    return render(request, 'chatbot/admin_chat_list.html', {'sessions': session_data})
+
+
+@login_required
+def admin_chat_detail(request, session_key):
+    """管理员：查看指定对话"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    msgs = ChatMessage.objects.filter(session_key=session_key).order_by('created_at')
+    return render(request, 'chatbot/admin_chat_detail.html', {
+        'messages': msgs,
+        'session_key': session_key,
     })
+
+
+@login_required
+def admin_manual_list(request):
+    """管理员：人工咨询请求列表"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    requests_qs = ManualRequest.objects.all().select_related('user')
+    return render(request, 'chatbot/admin_manual_list.html', {'requests': requests_qs})
+
+
+@login_required
+def admin_manual_respond(request, pk):
+    """管理员：接入人工咨询"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    manual_req = get_object_or_404(ManualRequest, pk=pk)
+    if request.method == 'POST':
+        manual_req.status = 'active'
+        manual_req.save()
+        messages.success(request, f'已接入 {manual_req.user.username} 的咨询')
+    return redirect('chatbot:admin_manual')
+
+
+@login_required
+def admin_manual_close(request, pk):
+    """管理员：结束人工咨询"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    manual_req = get_object_or_404(ManualRequest, pk=pk)
+    if request.method == 'POST':
+        from django.utils import timezone
+        manual_req.status = 'closed'
+        manual_req.closed_at = timezone.now()
+        manual_req.save()
+        messages.success(request, '咨询已结束')
+    return redirect('chatbot:admin_manual')

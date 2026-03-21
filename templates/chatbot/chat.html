@@ -4,15 +4,28 @@
 <div class="row justify-content-center">
     <div class="col-md-7">
         <div class="card">
-            <div class="card-header bg-primary text-white">
-                <i class="bi bi-robot"></i> 智能客服
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-robot"></i> 智能客服</span>
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'chatbot:request_manual' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-warning"><i class="bi bi-headset"></i> 转人工客服</button>
+                </form>
+                {% endif %}
             </div>
             <div class="card-body p-0">
                 <div class="chat-messages" id="chatBox">
+                    {% for msg in chat_messages %}
+                    <div class="chat-msg {% if msg.role == 'user' %}user{% else %}bot{% endif %}">
+                        {% if msg.role != 'user' %}<small class="text-muted">{% if msg.role == 'agent' %}人工客服{% else %}机器人{% endif %}：</small>{% endif %}
+                        {{ msg.content }}
+                    </div>
+                    {% empty %}
                     <div class="chat-msg bot">
                         👋 您好！我是宠物平台智能客服，有什么可以帮助您的？
                         <br><br>常见问题：预约服务、支付退款、宠物档案、走失寻回、疫苗提醒等
                     </div>
+                    {% endfor %}
                 </div>
                 <div class="p-3 border-top">
                     <form id="chatForm" class="d-flex gap-2">
@@ -42,6 +55,8 @@
 {% block extra_js %}
 <script>
 const chatBox = document.getElementById('chatBox');
+chatBox.scrollTop = chatBox.scrollHeight;
+
 const form = document.getElementById('chatForm');
 const input = document.getElementById('msgInput');
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;

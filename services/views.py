@@ -13,6 +13,8 @@ def service_list(request):
     keyword = request.GET.get('keyword', '')
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
+    sort = request.GET.get('sort', '')
+    location = request.GET.get('location', '')
 
     if category_id:
         services = services.filter(category_id=category_id)
@@ -22,12 +24,28 @@ def service_list(request):
         services = services.filter(price__gte=min_price)
     if max_price:
         services = services.filter(price__lte=max_price)
+    if location:
+        services = services.filter(address__icontains=location)
+
+    # 排序
+    if sort == 'price_asc':
+        services = services.order_by('price')
+    elif sort == 'price_desc':
+        services = services.order_by('-price')
+    elif sort == 'rating':
+        services = services.order_by('-avg_rating')
+    else:
+        services = services.order_by('-created_at')
 
     context = {
         'services': services,
         'categories': categories,
         'current_category': category_id,
         'keyword': keyword,
+        'current_sort': sort,
+        'location': location,
+        'min_price': min_price,
+        'max_price': max_price,
     }
     return render(request, 'services/service_list.html', context)
 

@@ -8,21 +8,46 @@
     {% endif %}
 </div>
 
+<!-- 搜索栏 -->
+<form method="get" class="mb-3">
+    {% if current_type %}<input type="hidden" name="type" value="{{ current_type }}">{% endif %}
+    <div class="input-group">
+        <input type="text" name="keyword" class="form-control" placeholder="搜索帖子标题或内容..." value="{{ keyword }}">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> 搜索</button>
+        {% if keyword %}
+        <a href="{% url 'community:post_list' %}{% if current_type %}?type={{ current_type }}{% endif %}" class="btn btn-outline-secondary">清除</a>
+        {% endif %}
+    </div>
+</form>
+
 <!-- Type tabs -->
-<ul class="nav nav-pills mb-4">
-    <li class="nav-item">
-        <a class="nav-link {% if not current_type %}active{% endif %}" href="{% url 'community:post_list' %}">全部</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if current_type == 'note' %}active{% endif %}" href="{% url 'community:post_list' %}?type=note">养宠笔记</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if current_type == 'qa' %}active{% endif %}" href="{% url 'community:post_list' %}?type=qa">问答咨询</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if current_type == 'show' %}active{% endif %}" href="{% url 'community:post_list' %}?type=show">宠物展示</a>
-    </li>
-</ul>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link {% if not current_type %}active{% endif %}" href="{% url 'community:post_list' %}{% if keyword %}?keyword={{ keyword }}{% endif %}{% if current_sort and current_sort != 'time' %}{% if keyword %}&{% else %}?{% endif %}sort={{ current_sort }}{% endif %}">全部</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_type == 'note' %}active{% endif %}" href="{% url 'community:post_list' %}?type=note{% if keyword %}&keyword={{ keyword }}{% endif %}{% if current_sort and current_sort != 'time' %}&sort={{ current_sort }}{% endif %}">养宠笔记</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_type == 'qa' %}active{% endif %}" href="{% url 'community:post_list' %}?type=qa{% if keyword %}&keyword={{ keyword }}{% endif %}{% if current_sort and current_sort != 'time' %}&sort={{ current_sort }}{% endif %}">问答咨询</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_type == 'show' %}active{% endif %}" href="{% url 'community:post_list' %}?type=show{% if keyword %}&keyword={{ keyword }}{% endif %}{% if current_sort and current_sort != 'time' %}&sort={{ current_sort }}{% endif %}">宠物展示</a>
+        </li>
+    </ul>
+    <!-- 排序 -->
+    <div class="btn-group">
+        {% with sort_base="community:post_list" %}
+        {% with sort_params="" %}
+        {% if keyword %}{% with sort_params=sort_params|add:"&keyword="|add:keyword %}{% endwith %}{% endif %}
+        {% if current_type %}{% with sort_params=sort_params|add:"&type="|add:current_type %}{% endwith %}{% endif %}
+        {% endwith %}
+        {% endwith %}
+        <a href="{% url 'community:post_list' %}?sort=hot{% if keyword %}&keyword={{ keyword }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}" class="btn btn-sm {% if current_sort == 'hot' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="bi bi-fire"></i> 热门</a>
+        <a href="{% url 'community:post_list' %}?sort=time{% if keyword %}&keyword={{ keyword }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}" class="btn btn-sm {% if current_sort == 'time' or not current_sort %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="bi bi-clock"></i> 最新</a>
+    </div>
+</div>
 
 {% for post in posts %}
 <div class="card mb-3">

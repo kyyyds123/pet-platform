@@ -63,6 +63,8 @@ class LostPet(models.Model):
     STATUS_CHOICES = (
         ('lost', '走失中'),
         ('found', '已找到'),
+        ('adopted', '已领养'),
+        ('expired', '已失效'),
     )
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                related_name='lost_pets', verbose_name='发布者')
@@ -83,3 +85,29 @@ class LostPet(models.Model):
 
     def __str__(self):
         return f'{self.pet_name} ({self.get_status_display()})'
+
+
+class SavedPost(models.Model):
+    """帖子收藏"""
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='saves')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                             related_name='saved_posts')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('post', 'user')
+        verbose_name = '帖子收藏'
+        verbose_name_plural = '帖子收藏'
+
+
+class SavedLost(models.Model):
+    """走失信息收藏"""
+    lost_pet = models.ForeignKey(LostPet, on_delete=models.CASCADE, related_name='saves')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                             related_name='saved_lost')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('lost_pet', 'user')
+        verbose_name = '走失信息收藏'
+        verbose_name_plural = '走失信息收藏'
