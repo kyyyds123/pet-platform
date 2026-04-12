@@ -53,3 +53,21 @@ class Review(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.rating}星'
+
+
+class OrderMessage(models.Model):
+    """订单沟通消息（宠物主人 ↔ 服务商）"""
+    order = models.ForeignKey(Order, on_delete=models.CASCADE,
+                              related_name='messages', verbose_name='订单')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                               related_name='order_messages', verbose_name='发送者')
+    content = models.TextField('消息内容')
+    created_at = models.DateTimeField('发送时间', auto_now_add=True)
+
+    class Meta:
+        verbose_name = '订单消息'
+        verbose_name_plural = '订单消息'
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.sender.username}: {self.content[:30]}'

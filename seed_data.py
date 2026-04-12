@@ -103,7 +103,7 @@ posts_data = [
 ]
 for ptype, title, content in posts_data:
     Post.objects.get_or_create(title=title, defaults={
-        'author': owner, 'post_type': ptype, 'content': content,
+        'author': owner, 'post_type': ptype, 'content': content, 'is_approved': True,
     })
 print("  ✓ 3 条社区帖子")
 

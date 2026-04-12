@@ -7,7 +7,7 @@ from .models import Post, Comment, Like, LostPet, SavedPost, SavedLost
 
 
 def post_list(request):
-    posts = Post.objects.all().select_related('author')
+    posts = Post.objects.filter(is_approved=True).select_related('author')
     post_type = request.GET.get('type')
     sort = request.GET.get('sort', 'time')
     keyword = request.GET.get('keyword', '')
@@ -33,6 +33,14 @@ def post_list(request):
 
 def post_detail(request, pk):
     post = get_object_or_404(Post.objects.select_related('author'), pk=pk)
+    # 未审核帖子只有管理员和作者本人可见
+    if not post.is_approved and not (
+        request.user.is_authenticated and (
+            request.user.is_admin_role or post.author == request.user
+        )
+    ):
+        from django.http import Http404
+        raise Http404
     comments = post.comments.all().select_related('author')
     user_liked = False
     if request.user.is_authenticated:
@@ -190,6 +198,36 @@ def admin_post_pin(request, pk):
     post.save()
     status = '置顶' if post.is_pinned else '取消置顶'
     messages.success(request, f'帖子已{status}')
+    return redirect('community:admin_posts')
+
+
+@login_required
+def admin_post_approve(request, pk):
+    """管理员：审核通过帖子"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    post = get_object_or_404(Post, pk=pk)
+    if request.method == 'POST':
+        post.is_approved = True
+        post.save()
+        messages.success(request, f'帖子「{post.title}」已审核通过')
+    return redirect('community:admin_posts')
+
+
+@login_required
+def admin_post_reject(request, pk):
+    """管理员：拒绝帖子"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    post = get_object_or_404(Post, pk=pk)
+    if request.method == 'POST':
+        post.is_approved = False
+        post.save()
+        messages.success(request, f'帖子「{post.title}」已拒绝')
     return redirect('community:admin_posts')
 
 

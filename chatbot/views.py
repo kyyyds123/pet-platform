@@ -69,8 +69,15 @@ def chatbot_page(request):
         messages_qs = ChatMessage.objects.filter(
             models.Q(session_key=session_key) | models.Q(user=request.user)
         )
+    # 检查是否有人工咨询中
+    active_manual = None
+    if request.user.is_authenticated:
+        active_manual = ManualRequest.objects.filter(
+            user=request.user, status='active'
+        ).first()
     return render(request, 'chatbot/chat.html', {
         'chat_messages': messages_qs.order_by('created_at')[:100],
+        'active_manual': active_manual,
     })
 
 
@@ -98,11 +105,7 @@ def chatbot_reply(request):
             user=request.user, status='active'
         ).first()
         if active_request:
-            reply = '您正在人工咨询中，请等待客服回复。'
-            ChatMessage.objects.create(
-                session_key=session_key, user=request.user,
-                role='bot', content=reply,
-            )
+            reply = '您正在人工咨询中，消息已发送给客服，请等待回复。'
             return JsonResponse({'reply': reply, 'manual': True})
 
     # FAQ 匹配
@@ -177,9 +180,11 @@ def admin_chat_detail(request, session_key):
         return redirect('index')
 
     msgs = ChatMessage.objects.filter(session_key=session_key).order_by('created_at')
+    manual_req = ManualRequest.objects.filter(session_key=session_key).first()
     return render(request, 'chatbot/admin_chat_detail.html', {
         'messages': msgs,
         'session_key': session_key,
+        'manual_req': manual_req,
     })
 
 
@@ -224,3 +229,24 @@ def admin_manual_close(request, pk):
         manual_req.save()
         messages.success(request, '咨询已结束')
     return redirect('chatbot:admin_manual')
+
+
+@login_required
+def admin_send_message(request, pk):
+    """管理员：在人工咨询中发送消息给用户"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可操作')
+        return redirect('index')
+
+    manual_req = get_object_or_404(ManualRequest, pk=pk, status='active')
+    if request.method == 'POST':
+        content = request.POST.get('content', '').strip()
+        if content:
+            ChatMessage.objects.create(
+                session_key=manual_req.session_key,
+                user=manual_req.user,
+                role='agent',
+                content=content,
+            )
+            messages.success(request, '消息已发送')
+    return redirect('chatbot:admin_chat_detail', session_key=manual_req.session_key)

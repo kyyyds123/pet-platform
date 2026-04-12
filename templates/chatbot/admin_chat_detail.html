@@ -2,10 +2,18 @@
 {% block title %}对话详情{% endblock %}
 {% block content %}
 <h3 class="mb-4"><i class="bi bi-chat-dots"></i> 对话详情</h3>
-<p class="text-muted">会话ID: <code>{{ session_key }}</code></p>
+<p class="text-muted">会话ID: <code>{{ session_key }}</code>
+    {% if manual_req %}
+        · 用户：<strong>{{ manual_req.user.username }}</strong>
+        · 状态：
+        {% if manual_req.status == 'active' %}<span class="badge bg-success">咨询中</span>
+        {% elif manual_req.status == 'pending' %}<span class="badge bg-warning">等待接入</span>
+        {% else %}<span class="badge bg-secondary">已结束</span>{% endif %}
+    {% endif %}
+</p>
 
 <div class="card">
-    <div class="card-body" style="max-height:500px;overflow-y:auto">
+    <div class="card-body" style="max-height:500px;overflow-y:auto" id="chatBox">
         {% for msg in messages %}
         <div class="mb-3 {% if msg.role == 'user' %}text-end{% endif %}">
             <div class="d-inline-block p-2 rounded {% if msg.role == 'user' %}bg-primary text-white{% elif msg.role == 'bot' %}bg-light{% else %}bg-warning bg-opacity-25{% endif %}" style="max-width:70%">
@@ -16,9 +24,33 @@
                 {{ msg.content }}
             </div>
         </div>
+        {% empty %}
+        <p class="text-center text-muted">暂无对话记录</p>
         {% endfor %}
     </div>
 </div>
 
-<a href="{% url 'chatbot:admin_chats' %}" class="btn btn-outline-secondary mt-3">返回列表</a>
+{% if manual_req and manual_req.status == 'active' %}
+<div class="card mt-3">
+    <div class="card-body">
+        <form method="post" action="{% url 'chatbot:admin_send_message' pk=manual_req.pk %}" class="d-flex gap-2">
+            {% csrf_token %}
+            <input type="text" name="content" class="form-control" placeholder="输入回复内容..." required>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> 发送</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3 d-flex gap-2">
+    <a href="{% url 'chatbot:admin_manual' %}" class="btn btn-outline-secondary">返回咨询列表</a>
+    <a href="{% url 'chatbot:admin_chats' %}" class="btn btn-outline-secondary">返回会话列表</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chatBox = document.getElementById('chatBox');
+chatBox.scrollTop = chatBox.scrollHeight;
+</script>
 {% endblock %}

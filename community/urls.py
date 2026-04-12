@@ -21,6 +21,8 @@ urlpatterns = [
     # 管理员审核
     path('admin/posts/', views.admin_post_list, name='admin_posts'),
     path('admin/posts/<int:pk>/pin/', views.admin_post_pin, name='admin_post_pin'),
+    path('admin/posts/<int:pk>/approve/', views.admin_post_approve, name='admin_post_approve'),
+    path('admin/posts/<int:pk>/reject/', views.admin_post_reject, name='admin_post_reject'),
     path('admin/posts/<int:pk>/delete/', views.admin_post_delete, name='admin_post_delete'),
     path('admin/comments/', views.admin_comment_list, name='admin_comments'),
     path('admin/comments/<int:pk>/delete/', views.admin_comment_delete, name='admin_comment_delete'),

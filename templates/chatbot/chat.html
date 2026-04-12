@@ -13,6 +13,11 @@
                 </form>
                 {% endif %}
             </div>
+            {% if active_manual %}
+            <div class="alert alert-success mb-0 rounded-0 text-center">
+                <i class="bi bi-headset"></i> 已连接人工客服，可以直接对话
+            </div>
+            {% endif %}
             <div class="card-body p-0">
                 <div class="chat-messages" id="chatBox">
                     {% for msg in chat_messages %}

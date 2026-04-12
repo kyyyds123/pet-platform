@@ -14,4 +14,5 @@ urlpatterns = [
     path('admin/manual/', views.admin_manual_list, name='admin_manual'),
     path('admin/manual/<int:pk>/respond/', views.admin_manual_respond, name='admin_manual_respond'),
     path('admin/manual/<int:pk>/close/', views.admin_manual_close, name='admin_manual_close'),
+    path('admin/manual/<int:pk>/send/', views.admin_send_message, name='admin_send_message'),
 ]

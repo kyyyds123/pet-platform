@@ -17,6 +17,7 @@ class Post(models.Model):
     image = models.ImageField('图片', upload_to='posts/', blank=True)
     likes_count = models.IntegerField('点赞数', default=0)
     comments_count = models.IntegerField('评论数', default=0)
+    is_approved = models.BooleanField('已审核', default=False)
     is_pinned = models.BooleanField('置顶', default=False)
     created_at = models.DateTimeField('发布时间', auto_now_add=True)
     updated_at = models.DateTimeField('更新时间', auto_now=True)

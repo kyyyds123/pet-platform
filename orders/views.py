@@ -2,7 +2,7 @@ import uuid
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Order, Review
+from .models import Order, Review, OrderMessage
 from services.models import Service
 from pets.models import Pet, VaccineRecord
 
@@ -51,7 +51,7 @@ def order_list(request):
 
 @login_required
 def order_detail(request, pk):
-    order = get_object_or_404(Order.objects.select_related('service__category', 'user'), pk=pk)
+    order = get_object_or_404(Order.objects.select_related('service__category', 'user', 'service__provider'), pk=pk)
     if order.user != request.user and order.service.provider != request.user:
         messages.error(request, '无权查看此订单')
         return redirect('orders:order_list')
@@ -69,10 +69,18 @@ def order_detail(request, pk):
     if is_medical_provider:
         customer_pets = Pet.objects.filter(owner=order.user, name=order.pet_name)
 
+    # 订单沟通消息
+    order_messages = order.messages.select_related('sender').all()
+    can_chat = (
+        order.user == request.user or order.service.provider == request.user
+    ) and order.status not in ('cancelled',)
+
     return render(request, 'orders/order_detail.html', {
         'order': order,
         'is_medical_provider': is_medical_provider,
         'customer_pets': customer_pets,
+        'order_messages': order_messages,
+        'can_chat': can_chat,
     })
 
 
@@ -156,6 +164,32 @@ def order_add_record(request, order_id):
 
 
 # ========== 管理员评价管理 ==========
+
+@login_required
+def order_send_message(request, pk):
+    """发送订单沟通消息"""
+    order = get_object_or_404(Order.objects.select_related('service__provider'), pk=pk)
+
+    # 只有订单的宠物主人和服务商可以发消息
+    if order.user != request.user and order.service.provider != request.user:
+        messages.error(request, '无权操作')
+        return redirect('orders:order_list')
+
+    if order.status == 'cancelled':
+        messages.error(request, '订单已取消，无法发送消息')
+        return redirect('orders:order_detail', pk=pk)
+
+    if request.method == 'POST':
+        content = request.POST.get('content', '').strip()
+        if content:
+            OrderMessage.objects.create(
+                order=order,
+                sender=request.user,
+                content=content,
+            )
+            messages.success(request, '消息已发送')
+    return redirect('orders:order_detail', pk=pk)
+
 
 @login_required
 def admin_review_list(request):

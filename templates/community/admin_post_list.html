@@ -23,6 +23,7 @@
                 <th>标题</th>
                 <th>类型</th>
                 <th>作者</th>
+                <th>审核状态</th>
                 <th>点赞</th>
                 <th>评论</th>
                 <th>发布时间</th>
@@ -38,14 +39,32 @@
             </td>
             <td><span class="post-type {{ post.post_type }}">{{ post.get_post_type_display }}</span></td>
             <td>{{ post.author.username }}</td>
+            <td>
+                {% if post.is_approved %}
+                    <span class="badge bg-success">已通过</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">待审核</span>
+                {% endif %}
+            </td>
             <td>{{ post.likes_count }}</td>
             <td>{{ post.comments_count }}</td>
             <td class="small text-muted">{{ post.created_at|date:"m-d H:i" }}</td>
             <td>
                 <div class="btn-group btn-group-sm">
+                    {% if not post.is_approved %}
+                    <form method="post" action="{% url 'community:admin_post_approve' pk=post.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-success" title="通过审核"><i class="bi bi-check-lg"></i></button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'community:admin_post_reject' pk=post.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-warning" title="撤回审核"><i class="bi bi-x-lg"></i></button>
+                    </form>
+                    {% endif %}
                     <form method="post" action="{% url 'community:admin_post_pin' pk=post.pk %}" class="d-inline">
                         {% csrf_token %}
-                        <button class="btn btn-outline-{% if post.is_pinned %}secondary{% else %}warning{% endif %}" title="{% if post.is_pinned %}取消置顶{% else %}置顶{% endif %}">
+                        <button class="btn btn-outline-{% if post.is_pinned %}secondary{% else %}info{% endif %}" title="{% if post.is_pinned %}取消置顶{% else %}置顶{% endif %}">
                             <i class="bi bi-pin{% if post.is_pinned %}-angle{% endif %}-fill"></i>
                         </button>
                     </form>
@@ -57,7 +76,7 @@
             </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">暂无帖子</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-4">暂无帖子</td></tr>
         {% endfor %}
         </tbody>
     </table>
