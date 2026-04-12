@@ -146,7 +146,7 @@ if (msgForm) {
         const content = msgInput.value.trim();
         if (!content) return;
         msgInput.value = '';
-        await fetch('{{ order.pk }}/message/', {
+        await fetch('message/', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrftoken},
             body: 'content=' + encodeURIComponent(content)
@@ -158,7 +158,7 @@ if (msgForm) {
     // 轮询新消息（每3秒）
     async function pollOrderMessages() {
         try {
-            const res = await fetch('{{ order.pk }}/poll/?last_id=' + getLastOrderMsgId());
+            const res = await fetch('poll/?last_id=' + getLastOrderMsgId());
             const data = await res.json();
             data.messages.forEach(m => {
                 if (document.querySelector('[data-msg-id="' + m.id + '"]')) return;
