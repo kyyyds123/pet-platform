@@ -64,17 +64,24 @@ def _get_session_key(request):
 
 def chatbot_page(request):
     session_key = _get_session_key(request)
-    messages_qs = ChatMessage.objects.filter(session_key=session_key)
-    if request.user.is_authenticated:
-        messages_qs = ChatMessage.objects.filter(
-            models.Q(session_key=session_key) | models.Q(user=request.user)
-        )
-    # 检查是否有人工咨询中
+
+    # 检查是否有人工咨询中，有的话统一用咨询的session_key查询
     active_manual = None
     if request.user.is_authenticated:
         active_manual = ManualRequest.objects.filter(
             user=request.user, status='active'
         ).first()
+
+    if active_manual:
+        # 人工模式：用咨询的session_key查询所有消息
+        messages_qs = ChatMessage.objects.filter(session_key=active_manual.session_key)
+    elif request.user.is_authenticated:
+        messages_qs = ChatMessage.objects.filter(
+            models.Q(session_key=session_key) | models.Q(user=request.user)
+        )
+    else:
+        messages_qs = ChatMessage.objects.filter(session_key=session_key)
+
     return render(request, 'chatbot/chat.html', {
         'chat_messages': messages_qs.order_by('created_at')[:100],
         'active_manual': active_manual,
@@ -91,6 +98,16 @@ def chatbot_reply(request):
 
     session_key = _get_session_key(request)
 
+    # 检查是否有人工咨询请求正在进行
+    active_request = None
+    if request.user.is_authenticated:
+        active_request = ManualRequest.objects.filter(
+            user=request.user, status='active'
+        ).first()
+        if active_request:
+            # 人工模式：用咨询的session_key保存，确保管理员能看到
+            session_key = active_request.session_key
+
     # 保存用户消息
     ChatMessage.objects.create(
         session_key=session_key,
@@ -99,13 +116,9 @@ def chatbot_reply(request):
         content=user_msg,
     )
 
-    # 检查是否有人工咨询请求正在进行
-    if request.user.is_authenticated:
-        active_request = ManualRequest.objects.filter(
-            user=request.user, status='active'
-        ).first()
-        if active_request:
-            return JsonResponse({'reply': '消息已发送', 'manual': True})
+    # 人工模式直接返回
+    if active_request:
+        return JsonResponse({'reply': '消息已发送', 'manual': True})
 
     # FAQ 匹配
     for rule in FAQ_RULES:
@@ -132,6 +145,13 @@ def chatbot_reply(request):
 def chatbot_poll(request):
     """AJAX轮询：获取新消息"""
     session_key = _get_session_key(request)
+    # 人工模式下用咨询的session_key
+    active_request = ManualRequest.objects.filter(
+        user=request.user, status='active'
+    ).first()
+    if active_request:
+        session_key = active_request.session_key
+
     last_id = int(request.GET.get('last_id', 0))
     msgs = ChatMessage.objects.filter(
         session_key=session_key,
