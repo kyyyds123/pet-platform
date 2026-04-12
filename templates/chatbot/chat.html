@@ -66,18 +66,25 @@ const form = document.getElementById('chatForm');
 const input = document.getElementById('msgInput');
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-// 获取最后一条消息的ID
+// 获取最后一条服务器消息的ID（忽略本地临时消息）
 function getLastMsgId() {
     const msgs = chatBox.querySelectorAll('[data-msg-id]');
-    if (msgs.length) return msgs[msgs.length - 1].dataset.msgId;
-    return 0;
+    let maxId = 0;
+    msgs.forEach(el => {
+        const id = parseInt(el.dataset.msgId);
+        if (id > maxId) maxId = id;
+    });
+    return maxId;
 }
+
+let localMsgSeq = -1;
 
 function addMsg(text, role, msgId) {
     const div = document.createElement('div');
     const isUser = role === 'user';
     div.className = 'chat-msg ' + (isUser ? 'user' : 'bot');
-    if (msgId) div.dataset.msgId = msgId;
+    // 本地消息给临时ID防重复，服务器消息用真实ID
+    div.dataset.msgId = msgId || (localMsgSeq--);
     if (!isUser) {
         const label = role === 'agent' ? '人工客服' : '机器人';
         div.innerHTML = '<small class="text-muted">' + label + '：</small>' + text;
