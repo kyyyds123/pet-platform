@@ -76,6 +76,7 @@
 </nav>
 
 <main class="container py-4">
+    {% block messages_area %}
     {% if messages %}
     {% for msg in messages %}
     <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">
@@ -84,6 +85,7 @@
     </div>
     {% endfor %}
     {% endif %}
+    {% endblock %}
     {% block content %}{% endblock %}
 </main>
 
