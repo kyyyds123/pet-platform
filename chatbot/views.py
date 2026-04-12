@@ -308,8 +308,7 @@ def admin_manual_close(request, pk):
 def admin_send_message(request, pk):
     """管理员：在人工咨询中发送消息给用户"""
     if not request.user.is_admin_role:
-        messages.error(request, '仅管理员可操作')
-        return redirect('index')
+        return JsonResponse({'error': '无权操作'}, status=403)
 
     manual_req = get_object_or_404(ManualRequest, pk=pk, status='active')
     if request.method == 'POST':
@@ -321,5 +320,5 @@ def admin_send_message(request, pk):
                 role='agent',
                 content=content,
             )
-            messages.success(request, '消息已发送')
-    return redirect('chatbot:admin_chat_detail', session_key=manual_req.session_key)
+            return JsonResponse({'ok': True})
+    return JsonResponse({'error': '无效请求'}, status=400)
