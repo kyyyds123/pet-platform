@@ -252,6 +252,9 @@ def admin_chat_detail(request, session_key):
         messages.error(request, '仅管理员可访问')
         return redirect('index')
 
+    # 清除残留的Django消息，避免横幅堆积
+    list(messages.get_messages(request))
+
     msgs = ChatMessage.objects.filter(session_key=session_key).order_by('created_at')
     manual_req = ManualRequest.objects.filter(session_key=session_key).first()
     return render(request, 'chatbot/admin_chat_detail.html', {
