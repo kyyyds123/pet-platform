@@ -6,6 +6,8 @@ app_name = 'chatbot'
 urlpatterns = [
     path('', views.chatbot_page, name='chat'),
     path('reply/', views.chatbot_reply, name='reply'),
+    path('poll/', views.chatbot_poll, name='poll'),
+    path('admin/poll/<str:session_key>/', views.admin_chat_poll, name='admin_poll'),
     path('manual/', views.request_manual, name='request_manual'),
 
     # 管理员

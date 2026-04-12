@@ -105,19 +105,19 @@ def chatbot_reply(request):
             user=request.user, status='active'
         ).first()
         if active_request:
-            reply = '您正在人工咨询中，消息已发送给客服，请等待回复。'
-            return JsonResponse({'reply': reply, 'manual': True})
+            return JsonResponse({'reply': '消息已发送', 'manual': True})
 
     # FAQ 匹配
     for rule in FAQ_RULES:
         for kw in rule['keywords']:
             if kw in user_msg:
+                answer = rule['answer']
                 ChatMessage.objects.create(
                     session_key=session_key,
                     user=request.user if request.user.is_authenticated else None,
-                    role='bot', content=rule['answer'],
+                    role='bot', content=answer,
                 )
-                return JsonResponse({'reply': rule['answer']})
+                return JsonResponse({'reply': answer})
 
     reply = '抱歉，我暂时无法理解您的问题。您可以点击下方"转人工客服"获取帮助，或尝试换个问法。'
     ChatMessage.objects.create(
@@ -126,6 +126,43 @@ def chatbot_reply(request):
         role='bot', content=reply,
     )
     return JsonResponse({'reply': reply})
+
+
+@login_required
+def chatbot_poll(request):
+    """AJAX轮询：获取新消息"""
+    session_key = _get_session_key(request)
+    last_id = int(request.GET.get('last_id', 0))
+    msgs = ChatMessage.objects.filter(
+        session_key=session_key,
+        id__gt=last_id
+    ).order_by('created_at')
+    data = [{
+        'id': m.id,
+        'role': m.role,
+        'content': m.content,
+        'time': m.created_at.strftime('%H:%M'),
+    } for m in msgs]
+    return JsonResponse({'messages': data})
+
+
+@login_required
+def admin_chat_poll(request, session_key):
+    """管理员AJAX轮询：获取指定会话新消息"""
+    if not request.user.is_admin_role:
+        return JsonResponse({'error': '无权访问'}, status=403)
+    last_id = int(request.GET.get('last_id', 0))
+    msgs = ChatMessage.objects.filter(
+        session_key=session_key,
+        id__gt=last_id
+    ).order_by('created_at')
+    data = [{
+        'id': m.id,
+        'role': m.role,
+        'content': m.content,
+        'time': m.created_at.strftime('%H:%M:%S'),
+    } for m in msgs]
+    return JsonResponse({'messages': data})
 
 
 @login_required
@@ -166,7 +203,7 @@ def admin_chat_list(request):
             'first_msg': first_msg,
             'last_msg': last_msg,
             'count': count,
-            'user': first_msg.user if first_msg else None,
+            'user': first_msg.user if first_msg and first_msg.user else None,
         })
 
     return render(request, 'chatbot/admin_chat_list.html', {'sessions': session_data})

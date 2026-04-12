@@ -15,7 +15,7 @@
 <div class="card">
     <div class="card-body" style="max-height:500px;overflow-y:auto" id="chatBox">
         {% for msg in messages %}
-        <div class="mb-3 {% if msg.role == 'user' %}text-end{% endif %}">
+        <div class="mb-3 {% if msg.role == 'user' %}text-end{% endif %}" data-msg-id="{{ msg.id }}">
             <div class="d-inline-block p-2 rounded {% if msg.role == 'user' %}bg-primary text-white{% elif msg.role == 'bot' %}bg-light{% else %}bg-warning bg-opacity-25{% endif %}" style="max-width:70%">
                 <small class="text-muted d-block">
                     {% if msg.role == 'user' %}用户{% elif msg.role == 'bot' %}机器人{% else %}人工客服{% endif %}
@@ -33,9 +33,9 @@
 {% if manual_req and manual_req.status == 'active' %}
 <div class="card mt-3">
     <div class="card-body">
-        <form method="post" action="{% url 'chatbot:admin_send_message' pk=manual_req.pk %}" class="d-flex gap-2">
+        <form id="adminReplyForm" class="d-flex gap-2">
             {% csrf_token %}
-            <input type="text" name="content" class="form-control" placeholder="输入回复内容..." required>
+            <input type="text" id="replyInput" class="form-control" placeholder="输入回复内容..." required>
             <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> 发送</button>
         </form>
     </div>
@@ -52,5 +52,59 @@
 <script>
 const chatBox = document.getElementById('chatBox');
 chatBox.scrollTop = chatBox.scrollHeight;
+
+function getLastAdminMsgId() {
+    const msgs = chatBox.querySelectorAll('[data-msg-id]');
+    if (msgs.length) return msgs[msgs.length - 1].dataset.msgId;
+    return 0;
+}
+
+function addAdminMsg(data) {
+    const div = document.createElement('div');
+    const isUser = data.role === 'user';
+    div.className = 'mb-3 ' + (isUser ? 'text-end' : '');
+    div.dataset.msgId = data.id;
+    let bgClass = 'bg-light';
+    if (isUser) bgClass = 'bg-primary text-white';
+    else if (data.role === 'agent') bgClass = 'bg-warning bg-opacity-25';
+    const labels = {user: '用户', bot: '机器人', agent: '人工客服'};
+    div.innerHTML = '<div class="d-inline-block p-2 rounded ' + bgClass + '" style="max-width:70%">' +
+        '<small class="text-muted d-block">' + (labels[data.role] || data.role) + ' · ' + data.time + '</small>' +
+        data.content + '</div>';
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// AJAX 回复
+const replyForm = document.getElementById('adminReplyForm');
+const replyInput = document.getElementById('replyInput');
+if (replyForm) {
+    const csrftoken = replyForm.querySelector('[name=csrfmiddlewaretoken]').value;
+    replyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = replyInput.value.trim();
+        if (!content) return;
+        replyInput.value = '';
+        await fetch('{% url "chatbot:admin_send_message" pk=manual_req.pk %}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrftoken},
+            body: 'content=' + encodeURIComponent(content)
+        });
+        pollAdminMessages();
+    });
+}
+
+// 轮询新消息（每3秒）
+async function pollAdminMessages() {
+    try {
+        const res = await fetch('{% url "chatbot:admin_poll" session_key=session_key %}?last_id=' + getLastAdminMsgId());
+        const data = await res.json();
+        data.messages.forEach(m => {
+            if (document.querySelector('[data-msg-id="' + m.id + '"]')) return;
+            addAdminMsg(m);
+        });
+    } catch(e) {}
+}
+setInterval(pollAdminMessages, 3000);
 </script>
 {% endblock %}

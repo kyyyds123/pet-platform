@@ -21,7 +21,7 @@
             <div class="card-body p-0">
                 <div class="chat-messages" id="chatBox">
                     {% for msg in chat_messages %}
-                    <div class="chat-msg {% if msg.role == 'user' %}user{% else %}bot{% endif %}">
+                    <div class="chat-msg {% if msg.role == 'user' %}user{% else %}bot{% endif %}" data-msg-id="{{ msg.id }}">
                         {% if msg.role != 'user' %}<small class="text-muted">{% if msg.role == 'agent' %}人工客服{% else %}机器人{% endif %}：</small>{% endif %}
                         {{ msg.content }}
                     </div>
@@ -66,10 +66,24 @@ const form = document.getElementById('chatForm');
 const input = document.getElementById('msgInput');
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-function addMsg(text, isUser) {
+// 获取最后一条消息的ID
+function getLastMsgId() {
+    const msgs = chatBox.querySelectorAll('[data-msg-id]');
+    if (msgs.length) return msgs[msgs.length - 1].dataset.msgId;
+    return 0;
+}
+
+function addMsg(text, role, msgId) {
     const div = document.createElement('div');
+    const isUser = role === 'user';
     div.className = 'chat-msg ' + (isUser ? 'user' : 'bot');
-    div.textContent = text;
+    if (msgId) div.dataset.msgId = msgId;
+    if (!isUser) {
+        const label = role === 'agent' ? '人工客服' : '机器人';
+        div.innerHTML = '<small class="text-muted">' + label + '：</small>' + text;
+    } else {
+        div.textContent = text;
+    }
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
@@ -78,7 +92,7 @@ form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = input.value.trim();
     if (!msg) return;
-    addMsg(msg, true);
+    addMsg(msg, 'user');
     input.value = '';
     const res = await fetch('reply/', {
         method: 'POST',
@@ -86,7 +100,10 @@ form.addEventListener('submit', async (e) => {
         body: 'message=' + encodeURIComponent(msg)
     });
     const data = await res.json();
-    addMsg(data.reply, false);
+    // 如果是人工模式，不立即显示占位文本，等轮询拉取真实消息
+    if (!data.manual) {
+        addMsg(data.reply, 'bot');
+    }
 });
 
 document.querySelectorAll('.quick-q').forEach(btn => {
@@ -95,5 +112,18 @@ document.querySelectorAll('.quick-q').forEach(btn => {
         form.dispatchEvent(new Event('submit'));
     });
 });
+
+// 轮询新消息（每3秒）
+setInterval(async () => {
+    try {
+        const res = await fetch('poll/?last_id=' + getLastMsgId());
+        const data = await res.json();
+        data.messages.forEach(m => {
+            // 跳过已显示的消息
+            if (document.querySelector('[data-msg-id="' + m.id + '"]')) return;
+            addMsg(m.content, m.role, m.id);
+        });
+    } catch(e) {}
+}, 3000);
 </script>
 {% endblock %}

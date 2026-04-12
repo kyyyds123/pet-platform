@@ -19,10 +19,10 @@
             {% for s in sessions %}
             <tr>
                 <td><code>{{ s.session_key|truncatechars:12 }}</code></td>
-                <td>{{ s.user|default:"匿名" }}</td>
+                <td>{% if s.user %}{{ s.user.username }}{% else %}匿名{% endif %}</td>
                 <td><span class="badge bg-primary">{{ s.count }}</span></td>
-                <td>{{ s.first_msg.content|truncatechars:30 }}</td>
-                <td>{{ s.last_msg.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{% if s.first_msg %}{{ s.first_msg.content|truncatechars:30 }}{% else %}-{% endif %}</td>
+                <td>{% if s.last_msg %}{{ s.last_msg.created_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
                 <td>
                     <a href="{% url 'chatbot:admin_chat_detail' session_key=s.session_key %}" class="btn btn-sm btn-outline-primary">查看详情</a>
                 </td>

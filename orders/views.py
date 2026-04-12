@@ -2,6 +2,7 @@ import uuid
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 from .models import Order, Review, OrderMessage
 from services.models import Service
 from pets.models import Pet, VaccineRecord
@@ -189,6 +190,24 @@ def order_send_message(request, pk):
             )
             messages.success(request, '消息已发送')
     return redirect('orders:order_detail', pk=pk)
+
+
+@login_required
+def order_message_poll(request, pk):
+    """AJAX轮询：获取订单新消息"""
+    order = get_object_or_404(Order.objects.select_related('service__provider'), pk=pk)
+    if order.user != request.user and order.service.provider != request.user:
+        return JsonResponse({'error': '无权访问'}, status=403)
+    last_id = int(request.GET.get('last_id', 0))
+    msgs = order.messages.filter(id__gt=last_id).select_related('sender').order_by('created_at')
+    data = [{
+        'id': m.id,
+        'sender': m.sender.username,
+        'is_self': m.sender == request.user,
+        'content': m.content,
+        'time': m.created_at.strftime('m-d H:i'),
+    } for m in msgs]
+    return JsonResponse({'messages': data})
 
 
 @login_required
