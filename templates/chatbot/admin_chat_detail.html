@@ -38,6 +38,10 @@
             <input type="text" id="replyInput" class="form-control" placeholder="输入回复内容..." required>
             <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> 发送</button>
         </form>
+        <form method="post" action="{% url 'chatbot:admin_manual_close' pk=manual_req.pk %}" class="mt-2" onsubmit="return confirm('确定结束该咨询？')">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> 结束咨询</button>
+        </form>
     </div>
 </div>
 {% endif %}

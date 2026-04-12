@@ -182,6 +182,22 @@ def request_manual(request):
     return redirect('chatbot:chat')
 
 
+@login_required
+def close_manual(request):
+    """用户结束人工咨询"""
+    if request.method == 'POST':
+        from django.utils import timezone
+        manual_req = ManualRequest.objects.filter(
+            user=request.user, status__in=['pending', 'active']
+        ).first()
+        if manual_req:
+            manual_req.status = 'closed'
+            manual_req.closed_at = timezone.now()
+            manual_req.save()
+            messages.success(request, '已结束人工咨询')
+    return redirect('chatbot:chat')
+
+
 # ========== 管理员功能 ==========
 
 @login_required

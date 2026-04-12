@@ -9,6 +9,7 @@ urlpatterns = [
     path('poll/', views.chatbot_poll, name='poll'),
     path('admin/poll/<str:session_key>/', views.admin_chat_poll, name='admin_poll'),
     path('manual/', views.request_manual, name='request_manual'),
+    path('manual/close/', views.close_manual, name='close_manual'),
 
     # 管理员
     path('admin/chats/', views.admin_chat_list, name='admin_chats'),

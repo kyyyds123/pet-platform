@@ -7,10 +7,17 @@
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-robot"></i> 智能客服</span>
                 {% if user.is_authenticated %}
-                <form method="post" action="{% url 'chatbot:request_manual' %}" class="d-inline">
-                    {% csrf_token %}
-                    <button class="btn btn-sm btn-warning"><i class="bi bi-headset"></i> 转人工客服</button>
-                </form>
+                    {% if active_manual %}
+                    <form method="post" action="{% url 'chatbot:close_manual' %}" class="d-inline" onsubmit="return confirm('确定结束人工咨询？')">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-danger"><i class="bi bi-x-circle"></i> 结束咨询</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'chatbot:request_manual' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-warning"><i class="bi bi-headset"></i> 转人工客服</button>
+                    </form>
+                    {% endif %}
                 {% endif %}
             </div>
             {% if active_manual %}
