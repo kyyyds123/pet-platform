@@ -44,10 +44,16 @@
                     <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>价格↑ 低到高</option>
                     <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>价格↓ 高到低</option>
                     <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>评分最高</option>
+                    <option value="distance" {% if current_sort == 'distance' %}selected{% endif %}>距离最近</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 d-flex gap-1">
+                <input type="hidden" name="lat" id="latInput" value="{{ lat|default:'' }}">
+                <input type="hidden" name="lng" id="lngInput" value="{{ lng|default:'' }}">
                 <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> 搜索</button>
+                <button type="button" id="locateBtn" class="btn btn-outline-success" title="定位">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </button>
             </div>
         </form>
     </div>
@@ -71,6 +77,9 @@
                 {% if s.address %}
                 <p class="text-muted small"><i class="bi bi-geo-alt"></i> {{ s.address|truncatechars:30 }}</p>
                 {% endif %}
+                {% if s.distance is not None %}
+                <p class="text-success small mb-1"><i class="bi bi-signpost"></i> 距您 {{ s.distance }} km</p>
+                {% endif %}
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="price-tag">{{ s.price }}</span>
                     <span class="rating">
@@ -91,4 +100,29 @@
     </div>
     {% endfor %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('locateBtn').addEventListener('click', function() {
+    var btn = this;
+    if (!navigator.geolocation) {
+        alert('您的浏览器不支持定位功能');
+        return;
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById('latInput').value = pos.coords.latitude;
+        document.getElementById('lngInput').value = pos.coords.longitude;
+        // 自动切换到距离排序
+        document.querySelector('select[name="sort"]').value = 'distance';
+        btn.closest('form').submit();
+    }, function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-geo-alt-fill"></i>';
+        alert('定位失败：' + err.message);
+    }, {timeout: 10000});
+});
+</script>
 {% endblock %}

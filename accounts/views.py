@@ -51,6 +51,30 @@ def user_logout(request):
     return redirect('index')
 
 
+def forgot_password(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        new_password = request.POST.get('new_password')
+        new_password2 = request.POST.get('new_password2')
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            messages.error(request, '用户名不存在')
+            return render(request, 'accounts/forgot_password.html')
+
+        if new_password != new_password2:
+            messages.error(request, '两次密码不一致')
+            return render(request, 'accounts/forgot_password.html')
+
+        user.set_password(new_password)
+        user.save()
+        messages.success(request, '密码重置成功，请使用新密码登录')
+        return redirect('accounts:login')
+
+    return render(request, 'accounts/forgot_password.html')
+
+
 @login_required
 def profile(request):
     if request.method == 'POST':

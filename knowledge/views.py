@@ -74,3 +74,99 @@ def article_favorite(request, pk):
     else:
         messages.success(request, '已收藏')
     return redirect('knowledge:article_detail', pk=pk)
+
+
+# ========== 管理员文章管理 ==========
+
+@login_required
+def admin_article_list(request):
+    """管理员：文章管理列表"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    articles = KnowledgeArticle.objects.all().select_related('category', 'created_by')
+    category_id = request.GET.get('category')
+    keyword = request.GET.get('keyword', '')
+
+    if category_id:
+        articles = articles.filter(category_id=category_id)
+    if keyword:
+        articles = articles.filter(Q(title__icontains=keyword))
+
+    categories = KnowledgeCategory.objects.all()
+    return render(request, 'knowledge/admin_article_list.html', {
+        'articles': articles,
+        'categories': categories,
+        'current_category': category_id,
+        'keyword': keyword,
+    })
+
+
+@login_required
+def admin_article_create(request):
+    """管理员：创建文章"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    if request.method == 'POST':
+        article = KnowledgeArticle.objects.create(
+            category_id=request.POST['category'],
+            title=request.POST['title'],
+            content=request.POST['content'],
+            summary=request.POST.get('summary', ''),
+            is_hot=request.POST.get('is_hot') == 'on',
+            image=request.FILES.get('image'),
+            created_by=request.user,
+        )
+        messages.success(request, f'文章「{article.title}」创建成功')
+        return redirect('knowledge:admin_articles')
+
+    categories = KnowledgeCategory.objects.all()
+    return render(request, 'knowledge/admin_article_form.html', {
+        'categories': categories,
+    })
+
+
+@login_required
+def admin_article_edit(request, pk):
+    """管理员：编辑文章"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    article = get_object_or_404(KnowledgeArticle, pk=pk)
+
+    if request.method == 'POST':
+        article.category_id = request.POST['category']
+        article.title = request.POST['title']
+        article.content = request.POST['content']
+        article.summary = request.POST.get('summary', '')
+        article.is_hot = request.POST.get('is_hot') == 'on'
+        if request.FILES.get('image'):
+            article.image = request.FILES['image']
+        article.save()
+        messages.success(request, f'文章「{article.title}」已更新')
+        return redirect('knowledge:admin_articles')
+
+    categories = KnowledgeCategory.objects.all()
+    return render(request, 'knowledge/admin_article_form.html', {
+        'article': article,
+        'categories': categories,
+    })
+
+
+@login_required
+def admin_article_delete(request, pk):
+    """管理员：删除文章"""
+    if not request.user.is_admin_role:
+        messages.error(request, '仅管理员可访问')
+        return redirect('index')
+
+    article = get_object_or_404(KnowledgeArticle, pk=pk)
+    if request.method == 'POST':
+        title = article.title
+        article.delete()
+        messages.success(request, f'文章「{title}」已删除')
+    return redirect('knowledge:admin_articles')

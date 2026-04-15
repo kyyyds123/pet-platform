@@ -15,6 +15,8 @@ def service_list(request):
     max_price = request.GET.get('max_price')
     sort = request.GET.get('sort', '')
     location = request.GET.get('location', '')
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng')
 
     if category_id:
         services = services.filter(category_id=category_id)
@@ -34,6 +36,29 @@ def service_list(request):
         services = services.order_by('-price')
     elif sort == 'rating':
         services = services.order_by('-avg_rating')
+    elif sort == 'distance' and lat and lng:
+        # 按距离排序（Haversine 公式）
+        from math import radians, cos, sin, asin, sqrt
+        def haversine(lat1, lon1, lat2, lon2):
+            lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+            return 2 * 6371 * asin(sqrt(a))  # 返回公里数
+
+        lat = float(lat)
+        lng = float(lng)
+        services_list = list(services)
+        for s in services_list:
+            if s.latitude and s.longitude:
+                s.distance = round(haversine(lat, lng, s.latitude, s.longitude), 1)
+            else:
+                s.distance = None
+        services_list.sort(key=lambda s: (s.distance is None, s.distance or 0))
+        context['services'] = services_list
+        context['lat'] = lat
+        context['lng'] = lng
+        return render(request, 'services/service_list.html', context)
     else:
         services = services.order_by('-created_at')
 
@@ -46,6 +71,8 @@ def service_list(request):
         'location': location,
         'min_price': min_price,
         'max_price': max_price,
+        'lat': lat,
+        'lng': lng,
     }
     return render(request, 'services/service_list.html', context)
 

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{% if article %}编辑文章{% else %}发布文章{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-pencil-square"></i> {% if article %}编辑文章{% else %}发布文章{% endif %}</h3>
+    <a href="{% url 'knowledge:admin_articles' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">文章标题 <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" required value="{{ article.title|default:'' }}">
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">知识分类 <span class="text-danger">*</span></label>
+                    <select name="category" class="form-select" required>
+                        <option value="">请选择分类</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if article and article.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3 d-flex align-items-end">
+                    <div class="form-check">
+                        <input type="checkbox" name="is_hot" class="form-check-input" id="isHot" {% if article and article.is_hot %}checked{% endif %}>
+                        <label class="form-check-label" for="isHot">设为热门文章</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">文章摘要</label>
+                <textarea name="summary" class="form-control" rows="2" placeholder="简要描述文章内容，用于列表展示">{{ article.summary|default:'' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">文章内容 <span class="text-danger">*</span></label>
+                <textarea name="content" class="form-control" rows="12" required>{{ article.content|default:'' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">封面图片</label>
+                {% if article and article.image %}
+                <div class="mb-2">
+                    <img src="{{ article.image.url }}" style="max-height:120px" class="rounded">
+                </div>
+                {% endif %}
+                <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> {% if article %}保存修改{% else %}发布文章{% endif %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
