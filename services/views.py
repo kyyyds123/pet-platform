@@ -55,10 +55,19 @@ def service_list(request):
             else:
                 s.distance = None
         services_list.sort(key=lambda s: (s.distance is None, s.distance or 0))
-        context['services'] = services_list
-        context['lat'] = lat
-        context['lng'] = lng
-        return render(request, 'services/service_list.html', context)
+        return render(request, 'services/service_list.html', {
+            'services': services_list,
+            'categories': categories,
+            'current_category': category_id,
+            'keyword': keyword,
+            'current_sort': sort,
+            'location': location,
+            'min_price': min_price,
+            'max_price': max_price,
+            'lat': lat,
+            'lng': lng,
+        })
+
     else:
         services = services.order_by('-created_at')
 
