@@ -1,48 +1,54 @@
 {% extends 'base.html' %}
-{% block title %}发布服务{% endblock %}
+{% block title %}{% if service %}编辑服务{% else %}发布服务{% endif %}{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-7">
         <div class="card">
             <div class="card-body p-4">
-                <h4 class="mb-4"><i class="bi bi-plus-circle"></i> 发布服务</h4>
+                <h4 class="mb-4"><i class="bi bi-{% if service %}pencil-square{% else %}plus-circle{% endif %}"></i> {% if service %}编辑服务{% else %}发布服务{% endif %}</h4>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label class="form-label">服务类别</label>
                         <select name="category" class="form-select" required>
                             {% for cat in categories %}
-                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            <option value="{{ cat.id }}" {% if service and service.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">服务名称</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <input type="text" name="name" class="form-control" required value="{{ service.name|default:'' }}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">服务描述</label>
-                        <textarea name="description" class="form-control" rows="4" required></textarea>
+                        <textarea name="description" class="form-control" rows="4" required>{{ service.description|default:'' }}</textarea>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">价格 (元)</label>
-                            <input type="number" name="price" class="form-control" step="0.01" required>
+                            <input type="number" name="price" class="form-control" step="0.01" required value="{{ service.price|default:'' }}">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">服务时长 (分钟)</label>
-                            <input type="number" name="duration" class="form-control" value="60">
+                            <input type="number" name="duration" class="form-control" value="{{ service.duration|default:'60' }}">
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">服务地址</label>
-                        <input type="text" name="address" class="form-control">
+                        <input type="text" name="address" class="form-control" value="{{ service.address|default:'' }}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">封面图片</label>
+                        {% if service and service.image %}
+                        <div class="mb-2">
+                            <img src="{{ service.image.url }}" style="max-height:150px" class="rounded border">
+                            <p class="text-muted small mt-1">如需更换请重新上传，不上传则保留原图</p>
+                        </div>
+                        {% endif %}
                         <input type="file" name="image" class="form-control" accept="image/*">
                     </div>
-                    <button type="submit" class="btn btn-primary">发布服务</button>
+                    <button type="submit" class="btn btn-primary">{% if service %}保存修改{% else %}发布服务{% endif %}</button>
                 </form>
             </div>
         </div>
