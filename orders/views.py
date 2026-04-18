@@ -122,6 +122,7 @@ def review_create(request, order_id):
             service=order.service,
             rating=rating,
             content=request.POST['content'],
+            is_approved=True,
         )
         service = order.service
         reviews = service.reviews.all()
