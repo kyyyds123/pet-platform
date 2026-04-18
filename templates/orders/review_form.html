@@ -10,21 +10,58 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label class="form-label">评分</label>
-                        <div class="d-flex gap-2" id="rating-group">
+                        <div id="star-rating" class="d-flex gap-1" style="font-size:2rem; cursor:pointer;">
                             {% for i in "12345" %}
-                            <input type="radio" class="btn-check" name="rating" id="r{{ i }}" value="{{ i }}" {% if i == "5" %}checked{% endif %}>
-                            <label class="btn btn-outline-warning" for="r{{ i }}">{{ i }}星</label>
+                            <i class="bi bi-star-fill star-item text-muted" data-value="{{ i }}"></i>
                             {% endfor %}
                         </div>
+                        <input type="hidden" name="rating" id="ratingInput" value="5">
+                        <small class="text-muted mt-1 d-block" id="ratingText">非常满意</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">评价内容</label>
                         <textarea name="content" class="form-control" rows="4" required placeholder="请分享您的体验..."></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">提交评价</button>
+                    <button type="submit" class="btn btn-primary w-100">提交评价</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const stars = document.querySelectorAll('.star-item');
+const input = document.getElementById('ratingInput');
+const text = document.getElementById('ratingText');
+const labels = ['', '很差', '较差', '一般', '满意', '非常满意'];
+
+function setRating(val) {
+    input.value = val;
+    text.textContent = labels[val];
+    stars.forEach((s, i) => {
+        s.classList.toggle('text-warning', i < val);
+        s.classList.toggle('text-muted', i >= val);
+    });
+}
+
+// 默认5星
+setRating(5);
+
+stars.forEach(star => {
+    star.addEventListener('click', () => setRating(parseInt(star.dataset.value)));
+    star.addEventListener('mouseenter', () => {
+        const val = parseInt(star.dataset.value);
+        stars.forEach((s, i) => {
+            s.classList.toggle('text-warning', i < val);
+            s.classList.toggle('text-muted', i >= val);
+        });
+    });
+});
+
+document.getElementById('star-rating').addEventListener('mouseleave', () => {
+    setRating(parseInt(input.value));
+});
+</script>
 {% endblock %}
