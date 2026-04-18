@@ -62,7 +62,7 @@ services_data = [
 for cat, name, desc, price, duration in services_data:
     Service.objects.get_or_create(name=name, defaults={
         'provider': provider, 'category': cat, 'description': desc,
-        'price': price, 'duration': duration, 'avg_rating': 4.5, 'rating_count': 12,
+        'price': price, 'duration': duration,
     })
 print("  ✓ 8 个示例服务")
 
