@@ -47,6 +47,8 @@
                         <li><a class="dropdown-item" href="{% url 'pets:pet_list' %}"><i class="bi bi-heart"></i> 我的宠物</a></li>
                         <li><a class="dropdown-item" href="{% url 'pets:reminders' %}"><i class="bi bi-bell"></i> 健康提醒</a></li>
                         <li><a class="dropdown-item" href="{% url 'orders:order_list' %}"><i class="bi bi-receipt"></i> 我的订单</a></li>
+                        <li><a class="dropdown-item" href="{% url 'community:my_posts' %}"><i class="bi bi-journal-text"></i> 我的帖子</a></li>
+                        <li><a class="dropdown-item" href="{% url 'community:saved_posts' %}"><i class="bi bi-bookmark"></i> 我的收藏</a></li>
                         {% if user.is_provider %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'services:service_create' %}"><i class="bi bi-plus-circle"></i> 发布服务</a></li>

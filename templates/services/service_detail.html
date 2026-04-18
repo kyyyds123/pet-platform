@@ -110,7 +110,31 @@
 
 <!-- 评价 -->
 <div class="mt-4">
-    <h5><i class="bi bi-chat-square-text"></i> 用户评价 ({{ reviews|length }})</h5>
+    <h5><i class="bi bi-chat-square-text"></i> 用户评价 ({{ service.rating_count }})</h5>
+
+    {% if user.is_authenticated and completed_orders_without_review > 0 and not user_review %}
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        <div>您有已完成的服务订单尚未评价，去
+            <a href="{% url 'orders:order_list' %}" class="alert-link">我的订单</a> 中评价吧！
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user_review and not user_review.is_approved %}
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="bi bi-hourglass-split me-2"></i>
+        <div>
+            <strong>我的评价</strong> — 正在审核中
+            <div class="mt-1">
+                <span class="rating">{% for i in "12345" %}{% if forloop.counter <= user_review.rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endfor %}</span>
+                <span class="ms-2">{{ user_review.content|truncatechars:100 }}</span>
+            </div>
+            <small class="text-muted">{{ user_review.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+    </div>
+    {% endif %}
+
     {% for r in reviews %}
     <div class="card mb-2">
         <div class="card-body">
@@ -123,7 +147,9 @@
         </div>
     </div>
     {% empty %}
+    {% if not user_review %}
     <p class="text-muted">暂无评价</p>
+    {% endif %}
     {% endfor %}
 </div>
 {% endblock %}

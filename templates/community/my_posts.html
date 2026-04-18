@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}我的帖子{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-journal-text"></i> 我的帖子</h3>
+
+{% for post in posts %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex gap-2 align-items-center mb-2">
+            <span class="post-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+            {% if post.is_approved %}
+            <span class="badge bg-success"><i class="bi bi-check-circle"></i> 已发布</span>
+            {% else %}
+            <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> 审核中</span>
+            {% endif %}
+            <small class="text-muted ms-auto">{{ post.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+        <h5>
+            <a href="{% url 'community:post_detail' pk=post.pk %}" class="text-decoration-none text-dark">{{ post.title }}</a>
+        </h5>
+        <p class="text-muted mb-2">{{ post.content|truncatechars:150 }}</p>
+        <div class="d-flex align-items-center text-muted small">
+            <span><i class="bi bi-heart"></i> {{ post.likes_count }}</span>
+            <span class="ms-3"><i class="bi bi-chat"></i> {{ post.comments_count }}</span>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-journal" style="font-size:3rem"></i>
+    <p class="mt-2">还没有发布过帖子</p>
+    <a href="{% url 'community:post_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i> 去发帖</a>
+</div>
+{% endfor %}
+{% endblock %}

@@ -3,10 +3,24 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
+        {% if not post.is_approved %}
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class="bi bi-hourglass-split me-2" style="font-size:1.2rem"></i>
+            <div>
+                <strong>审核中</strong> — 您的帖子正在等待管理员审核，审核通过后将公开展示。
+                {% if user == post.author %}
+                <a href="{% url 'community:my_posts' %}" class="alert-link ms-2">查看我的帖子</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
         <div class="card mb-4">
             <div class="card-body p-4">
                 <div class="d-flex gap-2 align-items-center mb-2">
                     <span class="post-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+                    {% if not post.is_approved %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> 审核中</span>
+                    {% endif %}
                     <small class="text-muted">{{ post.created_at|date:"Y-m-d H:i" }}</small>
                 </div>
                 <h3>{{ post.title }}</h3>
@@ -21,6 +35,9 @@
                     {% if user.is_authenticated %}
                     <button class="btn btn-sm {% if user_liked %}btn-danger{% else %}btn-outline-danger{% endif %}" id="like-btn" data-pk="{{ post.pk }}">
                         <i class="bi bi-heart{% if user_liked %}-fill{% endif %}"></i> <span id="like-count">{{ post.likes_count }}</span>
+                    </button>
+                    <button class="btn btn-sm {% if user_saved %}btn-warning{% else %}btn-outline-warning{% endif %}" id="save-btn" data-pk="{{ post.pk }}">
+                        <i class="bi bi-bookmark{% if user_saved %}-fill{% endif %}"></i> <span id="save-text">{% if user_saved %}已收藏{% else %}收藏{% endif %}</span>
                     </button>
                     {% else %}
                     <span class="text-muted"><i class="bi bi-heart"></i> {{ post.likes_count }}</span>
@@ -65,6 +82,19 @@ document.getElementById('like-btn')?.addEventListener('click', function() {
         document.getElementById('like-count').textContent = d.likes;
         this.classList.toggle('btn-danger', d.liked);
         this.classList.toggle('btn-outline-danger', !d.liked);
+    });
+});
+
+document.getElementById('save-btn')?.addEventListener('click', function() {
+    fetch(this.dataset.pk + '/save/', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+    .then(r=>r.json()).then(d=>{
+        const icon = this.querySelector('i');
+        const text = document.getElementById('save-text');
+        this.classList.toggle('btn-warning', d.saved);
+        this.classList.toggle('btn-outline-warning', !d.saved);
+        icon.classList.toggle('bi-bookmark-fill', d.saved);
+        icon.classList.toggle('bi-bookmark', !d.saved);
+        text.textContent = d.saved ? '已收藏' : '收藏';
     });
 });
 </script>

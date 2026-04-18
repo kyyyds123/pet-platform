@@ -91,16 +91,27 @@ def service_detail(request, pk):
     reviews = service.reviews.filter(is_approved=True).select_related('user')[:10]
     can_manage = False
     pets = []
+    user_review = None
+    completed_orders_without_review = 0
     if request.user.is_authenticated:
         can_manage = request.user.is_admin_role or (request.user.is_provider and service.provider == request.user)
         if not request.user.is_provider and not request.user.is_admin_role:
             from pets.models import Pet
             pets = Pet.objects.filter(owner=request.user)
+        # 查找当前用户对该服务的评价（含未审核的）
+        from orders.models import Order
+        user_review = service.reviews.filter(user=request.user).first()
+        # 统计用户已完成但未评价的订单数
+        completed_orders_without_review = Order.objects.filter(
+            user=request.user, service=service, status='completed'
+        ).exclude(review__isnull=False).count()
     return render(request, 'services/service_detail.html', {
         'service': service,
         'reviews': reviews,
         'can_manage': can_manage,
         'pets': pets,
+        'user_review': user_review,
+        'completed_orders_without_review': completed_orders_without_review,
     })
 
 

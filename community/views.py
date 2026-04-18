@@ -43,12 +43,15 @@ def post_detail(request, pk):
         raise Http404
     comments = post.comments.all().select_related('author')
     user_liked = False
+    user_saved = False
     if request.user.is_authenticated:
         user_liked = Like.objects.filter(post=post, user=request.user).exists()
+        user_saved = SavedPost.objects.filter(post=post, user=request.user).exists()
     return render(request, 'community/post_detail.html', {
         'post': post,
         'comments': comments,
         'user_liked': user_liked,
+        'user_saved': user_saved,
     })
 
 
@@ -62,9 +65,16 @@ def post_create(request):
             content=request.POST['content'],
             image=request.FILES.get('image'),
         )
-        messages.success(request, '发布成功')
+        messages.success(request, '帖子已提交，审核通过后将公开展示')
         return redirect('community:post_detail', pk=post.pk)
     return render(request, 'community/post_form.html')
+
+
+@login_required
+def my_posts(request):
+    """我的帖子（含审核状态）"""
+    posts = Post.objects.filter(author=request.user).order_by('-created_at')
+    return render(request, 'community/my_posts.html', {'posts': posts})
 
 
 @login_required
