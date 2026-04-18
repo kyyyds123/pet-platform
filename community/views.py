@@ -165,9 +165,15 @@ def lost_save(request, pk):
 
 @login_required
 def my_saved_posts(request):
-    """我的收藏帖子"""
-    saved = SavedPost.objects.filter(user=request.user).select_related('post__author')
-    return render(request, 'community/saved_posts.html', {'saved_posts': saved})
+    """我的收藏（帖子 + 知识文章）"""
+    saved_posts = SavedPost.objects.filter(user=request.user).select_related('post__author')
+    # 同时获取知识文章收藏
+    from knowledge.models import KnowledgeFavorite
+    saved_articles = KnowledgeFavorite.objects.filter(user=request.user).select_related('article__category')
+    return render(request, 'community/saved_posts.html', {
+        'saved_posts': saved_posts,
+        'saved_articles': saved_articles,
+    })
 
 
 @login_required

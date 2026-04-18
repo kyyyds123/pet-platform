@@ -77,16 +77,18 @@
 {% block extra_js %}
 <script>
 document.getElementById('like-btn')?.addEventListener('click', function() {
-    fetch(this.dataset.pk + '/like/', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+    fetch("{% url 'community:post_like' pk=post.pk %}", {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
     .then(r=>r.json()).then(d=>{
         document.getElementById('like-count').textContent = d.likes;
         this.classList.toggle('btn-danger', d.liked);
         this.classList.toggle('btn-outline-danger', !d.liked);
+        this.querySelector('i').classList.toggle('bi-heart-fill', d.liked);
+        this.querySelector('i').classList.toggle('bi-heart', !d.liked);
     });
 });
 
 document.getElementById('save-btn')?.addEventListener('click', function() {
-    fetch(this.dataset.pk + '/save/', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
+    fetch("{% url 'community:post_save' pk=post.pk %}", {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}})
     .then(r=>r.json()).then(d=>{
         const icon = this.querySelector('i');
         const text = document.getElementById('save-text');
