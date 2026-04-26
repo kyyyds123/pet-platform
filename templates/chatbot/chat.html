@@ -107,7 +107,6 @@ form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = input.value.trim();
     if (!msg || waitingForReply) return;
-    addMsg(msg, 'user');
     input.value = '';
     waitingForReply = true;
     try {
@@ -117,8 +116,10 @@ form.addEventListener('submit', async (e) => {
             body: 'message=' + encodeURIComponent(msg)
         });
         const data = await res.json();
+        // 用服务端返回的消息ID添加消息，确保轮询时能正确去重
+        addMsg(msg, 'user', data.user_msg_id);
         if (!data.manual) {
-            addMsg(data.reply, 'bot');
+            addMsg(data.reply, 'bot', data.bot_msg_id);
         }
     } catch(e) {
         addMsg('发送失败，请重试', 'bot');

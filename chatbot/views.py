@@ -64,7 +64,7 @@ def chatbot_reply(request):
             session_key = active_request.session_key
 
     # 保存用户消息
-    ChatMessage.objects.create(
+    user_message = ChatMessage.objects.create(
         session_key=session_key,
         user=request.user if request.user.is_authenticated else None,
         role='user',
@@ -73,7 +73,7 @@ def chatbot_reply(request):
 
     # 人工模式直接返回
     if active_request:
-        return JsonResponse({'reply': '消息已发送', 'manual': True})
+        return JsonResponse({'reply': '消息已发送', 'manual': True, 'user_msg_id': user_message.id})
 
     # 构建对话历史
     history_msgs = ChatMessage.objects.filter(
@@ -89,12 +89,12 @@ def chatbot_reply(request):
     except Exception:
         answer = '抱歉，我暂时无法回复您的问题，请稍后再试或转人工客服。'
 
-    ChatMessage.objects.create(
+    bot_message = ChatMessage.objects.create(
         session_key=session_key,
         user=request.user if request.user.is_authenticated else None,
         role='bot', content=answer,
     )
-    return JsonResponse({'reply': answer})
+    return JsonResponse({'reply': answer, 'user_msg_id': user_message.id, 'bot_msg_id': bot_message.id})
 
 
 @login_required
