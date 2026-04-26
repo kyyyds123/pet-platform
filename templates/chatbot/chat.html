@@ -84,14 +84,13 @@ function getLastMsgId() {
     return maxId;
 }
 
-let localMsgSeq = -1;
+
 
 function addMsg(text, role, msgId) {
     const div = document.createElement('div');
     const isUser = role === 'user';
     div.className = 'chat-msg ' + (isUser ? 'user' : 'bot');
-    // 本地消息给临时ID防重复，服务器消息用真实ID
-    div.dataset.msgId = msgId || (localMsgSeq--);
+    if (msgId) div.dataset.msgId = msgId;
     if (!isUser) {
         const label = role === 'agent' ? '人工客服' : '机器人';
         div.innerHTML = '<small class="text-muted">' + label + '：</small>' + text;
@@ -101,24 +100,33 @@ function addMsg(text, role, msgId) {
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
+let waitingForReply = false;
+
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = input.value.trim();
-    if (!msg) return;
+    if (!msg || waitingForReply) return;
     addMsg(msg, 'user');
     input.value = '';
-    const res = await fetch('reply/', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrftoken},
-        body: 'message=' + encodeURIComponent(msg)
-    });
-    const data = await res.json();
-    // 如果是人工模式，不立即显示占位文本，等轮询拉取真实消息
-    if (!data.manual) {
-        addMsg(data.reply, 'bot');
+    waitingForReply = true;
+    try {
+        const res = await fetch('reply/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrftoken},
+            body: 'message=' + encodeURIComponent(msg)
+        });
+        const data = await res.json();
+        if (!data.manual) {
+            addMsg(data.reply, 'bot');
+        }
+    } catch(e) {
+        addMsg('发送失败，请重试', 'bot');
+    } finally {
+        waitingForReply = false;
     }
 });
+
 
 document.querySelectorAll('.quick-q').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -129,15 +137,16 @@ document.querySelectorAll('.quick-q').forEach(btn => {
 
 // 轮询新消息（每3秒）
 setInterval(async () => {
+    if (waitingForReply) return;
     try {
         const res = await fetch('poll/?last_id=' + getLastMsgId());
         const data = await res.json();
         data.messages.forEach(m => {
-            // 跳过已显示的消息
             if (document.querySelector('[data-msg-id="' + m.id + '"]')) return;
             addMsg(m.content, m.role, m.id);
         });
     } catch(e) {}
 }, 3000);
+
 </script>
 {% endblock %}

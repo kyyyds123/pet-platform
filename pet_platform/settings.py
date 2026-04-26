@@ -10,6 +10,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'simpleui',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -95,3 +96,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+# 豆包大模型配置
+LLM_API_KEY = 'ark-5c154af6-dcd5-4d4e-92a0-07a4905cc2e5-04c0c'
+LLM_MODEL = 'doubao-seed-1-8-251228'  # 你的接入点ID
