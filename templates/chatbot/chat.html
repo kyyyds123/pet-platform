@@ -35,7 +35,6 @@
                     {% empty %}
                     <div class="chat-msg bot">
                         👋 您好！我是宠物平台智能客服，有什么可以帮助您的？
-                        <br><br>常见问题：预约服务、支付退款、宠物档案、走失寻回、疫苗提醒等
                     </div>
                     {% endfor %}
                 </div>
@@ -49,17 +48,7 @@
             </div>
         </div>
 
-        <!-- Quick questions -->
-        <div class="mt-3">
-            <p class="text-muted small mb-2">快速提问：</p>
-            <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-outline-secondary btn-sm quick-q">怎么预约服务？</button>
-                <button class="btn btn-outline-secondary btn-sm quick-q">怎么取消订单？</button>
-                <button class="btn btn-outline-secondary btn-sm quick-q">怎么添加宠物档案？</button>
-                <button class="btn btn-outline-secondary btn-sm quick-q">走失宠物怎么发布？</button>
-                <button class="btn btn-outline-secondary btn-sm quick-q">疫苗提醒怎么设置？</button>
-            </div>
-        </div>
+
     </div>
 </div>
 {% endblock %}
@@ -99,6 +88,7 @@ function addMsg(text, role, msgId) {
     }
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
+    return div;
 }
 let waitingForReply = false;
 
@@ -108,6 +98,8 @@ form.addEventListener('submit', async (e) => {
     const msg = input.value.trim();
     if (!msg || waitingForReply) return;
     input.value = '';
+    // 立即显示用户消息
+    const userDiv = addMsg(msg, 'user');
     waitingForReply = true;
     try {
         const res = await fetch('reply/', {
@@ -116,8 +108,8 @@ form.addEventListener('submit', async (e) => {
             body: 'message=' + encodeURIComponent(msg)
         });
         const data = await res.json();
-        // 用服务端返回的消息ID添加消息，确保轮询时能正确去重
-        addMsg(msg, 'user', data.user_msg_id);
+        // 给用户消息补上服务端ID，确保轮询去重
+        if (data.user_msg_id) userDiv.dataset.msgId = data.user_msg_id;
         if (!data.manual) {
             addMsg(data.reply, 'bot', data.bot_msg_id);
         }
@@ -126,14 +118,6 @@ form.addEventListener('submit', async (e) => {
     } finally {
         waitingForReply = false;
     }
-});
-
-
-document.querySelectorAll('.quick-q').forEach(btn => {
-    btn.addEventListener('click', () => {
-        input.value = btn.textContent;
-        form.dispatchEvent(new Event('submit'));
-    });
 });
 
 // 轮询新消息（每3秒）
